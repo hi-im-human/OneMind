@@ -1,0 +1,22 @@
+{
+  "_comment": "Copy to continuity.json and edit. REQUIRED EDITS: set 'workspace' to an ABSOLUTE path (the hook refuses the placeholder, a nonexistent path, and a relative one), and make the file list match files that actually exist — configured files that are missing are a visible error, not a silent skip. Sections render in config order, each under its own banner; a section with no 'events' key appears on every event. 'caps' feed check_limits.py at commit time (logical characters). This base config owns ONLY generic continuity — consumer packages (a scheduler, a tail-writer) add their own sections here when installed; see !SPECS.md for the section contract. No command/script source types exist, by design.",
+  "workspace": "<WORKSPACE>",
+  "sections": [
+    {
+      "slug": "identity",
+      "header": "IDENTITY + CONTINUITY — READ BEFORE ACTING",
+      "events": ["SessionStart", "PostCompact"],
+      "text": "Your session just started or compacted. **These files are NOT in your context — nothing was injected.** To maintain continuity, read them now, in this order. Reading these comes before beginning unrelated work; an urgent request from your human, an active correction, a safety issue, or an explicit pause/hold outranks this — handle it first, then come back and read.",
+      "read_files": {
+        "dir": ".memory/identity",
+        "patterns": ["persona.md", "user.md", "relationships.md", "principles.md"]
+      }
+    }
+  ],
+  "caps": [
+    { "path": ".memory/identity/persona.md",       "limit": 12000 },
+    { "path": ".memory/identity/user.md",          "limit": 12000 },
+    { "path": ".memory/identity/relationships.md", "limit": 12000 },
+    { "path": ".memory/identity/principles.md",    "limit": 8000 }
+  ]
+}

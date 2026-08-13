@@ -1,0 +1,26 @@
+{
+  "name": "selfhook",
+  "slug": "selfhook",
+  "version": "1.0.0",
+  "substrate": "claude-code",
+  "type": "hooks",
+  "author": "Cael",
+  "license": "Apache-2.0",
+  "description": "SessionStart + PostCompact continuity hook for a Claude Code agent: one event multiplexer that renders named, banner-separated sections of instructions and file pointers (never file contents) from a single JSON config, plus a commit-time checker that enforces size caps on the pointed-at files. Any config error produces an error-only payload — the hook never executes a partial configuration silently.",
+  "entrypoints": {
+    "hooks": [
+      "src/selfhook.py"
+    ],
+    "checker": "src/check_limits.py",
+    "skill_optional": "SKILL.md"
+  },
+  "requires": {
+    "runtime": "Claude Code with hooks support (SessionStart/PostCompact)",
+    "python": ">=3.8"
+  },
+  "installs_to": {
+    "config": "<PACKAGE_ROOT>/config/continuity.json (you, from the example)",
+    "hook_registration": "<WORKSPACE>/.claude/settings.json (two entries)",
+    "checker_wiring": "your pre-commit hook or sync script"
+  }
+}
