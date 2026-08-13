@@ -12,6 +12,16 @@ repository's Issues.
 
 ---
 
+## 2026-08-13 — v1.0.1: blend guidance + manifest tracking fix
+
+- **Same-event hook outputs are BLENDED into one context injection** without clear
+  boundaries — documented in `!INSTALL.md` and the PostCompact hook docstring, with the
+  recommendation to combine several same-event hooks into one script using a short
+  header per concern (headers preserve the boundaries the runtime doesn't).
+- Export-repo fix shipped alongside: the repository `.gitignore` had wrongly swallowed
+  `config/tool.json` (required public manifest), so v1.0.0's public tree was missing it;
+  restored, and the ignore rule corrected.
+
 ## 2026-08-13 — v1.0 candidate: genericized for standalone release
 
 - Rebuilt from the originating installation's corrected master (its two operator

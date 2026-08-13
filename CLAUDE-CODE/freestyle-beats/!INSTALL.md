@@ -101,8 +101,14 @@ Nothing else is written anywhere, ever. The hook registration JSON (add to
 }
 ```
 
-If the agent already has hooks on these events, add these as additional matcher
-entries — don't replace existing ones; multiple hooks on one event all fire.
+If the agent already has hooks on these events, adding these as additional matcher
+entries works — multiple hooks on one event all fire. **But their outputs are blended
+together into one context injection, without clear boundaries between them** — several
+hooks' reminders arrive as one run-on block the agent has to untangle. **If you
+accumulate more than a couple of hooks on the same event, combine them into a single
+script that prints one payload with a short header per concern** (e.g. `## Schedule`,
+`## Continuity`) — the headers preserve the boundaries the runtime doesn't. Either way,
+don't replace existing entries you didn't write.
 
 ## Verify
 

@@ -8,7 +8,10 @@ hook deliberately does not claim either outcome (see notice comment below).
 
 If the agent runs another PostCompact hook (e.g. a conversation-tail
 extractor), register this as a SECOND matcher entry alongside it — both fire
-on the same event and contribute additionalContext independently.
+on the same event, and the runtime BLENDS their outputs into one context
+injection without clear boundaries. If you accumulate several hooks on this event, combine
+them into one script that prints a single payload with a short header per
+concern; the headers preserve the boundaries the runtime doesn't.
 
 Registration in the agent's `.claude/settings.json` (replace <PACKAGE_ROOT>
 with the absolute path where you installed this package):
