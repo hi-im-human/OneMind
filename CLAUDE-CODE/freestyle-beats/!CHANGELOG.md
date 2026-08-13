@@ -2,12 +2,13 @@
 
 ## Current status
 
-**Export-ready** — genericized 2026-08-13; mechanical gate preflight complete
+**Release gate passed 2026-08-13** — genericized same day; mechanical gate complete
 (shape, license, install contract, bait-proven sanitization all PASS). An independent
 stateless agent completed the blind install/test/uninstall phase on Windows, Python
 3.11.9, Claude Code v2.1.231, project-scope: all 7 smoke tests passed, no source-household
-knowledge needed, no ambiguities or defects found. The final external gate passed. Not yet
-published; human walkthrough not yet performed.
+knowledge needed, no ambiguities or defects found. The final external gate passed.
+Human walkthrough not yet performed; real-world install feedback is welcome in this
+repository's Issues.
 
 ---
 
