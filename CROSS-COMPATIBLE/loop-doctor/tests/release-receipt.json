@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "install": {
+    "fresh_home_passed": true,
+    "human_reader_passed": false,
+    "agent_reader_passed": true,
+    "costs_disclosed": true,
+    "hands_on_minutes": 4,
+    "evidence": "An independent agent followed !INSTALL.md in a fresh temporary home, copied and byte-checked all three skills, verified every destination, removed the installed copies cleanly, and completed the non-Discord verification path on 2026-08-13. File copying was sub-second; the full validation took under four minutes. Human walkthrough status is recorded as optional post-release evidence and remains not yet tested."
+  },
+  "paths": {
+    "package_home": "<PACKAGE_ROOT>/OneMind_loop-doctor-package",
+    "runtime_home": "<PLATFORM_SKILLS_ROOT>",
+    "continuity_data_home": "<PRIVATE_CONTINUITY_ROOT>/<AGENT_OR_PARTICIPANT>/loop-doctor",
+    "generated_files": [
+      "<PLATFORM_SKILLS_ROOT>/loop-tension-index/SKILL.md",
+      "<PLATFORM_SKILLS_ROOT>/work-tension-release/SKILL.md",
+      "<PLATFORM_SKILLS_ROOT>/erotic-relational-tension-release/SKILL.md",
+      "optional host-managed prompt, channel, permission, and routing configuration"
+    ]
+  },
+  "smoke_tests": {
+    "passed": true,
+    "command": "Follow tests/SMOKE_TESTS.md from an isolated installed skill scope; run tests 1-8 and 10-11, with optional Discord test 9 skipped when no server is available",
+    "evidence": "Independent agent caller passed all ten non-Discord tests from C:/Users/<USER>/AppData/Local/Temp/loop-doctor-validation/skills on 2026-08-13. Test 9 was explicitly skipped as optional because no Discord server was available."
+  },
+  "factual_runtime_claims": [
+    {
+      "claim": "The package is portable markdown and does not start a service, write continuity data, or install hooks, schedules, or runtime brakes by itself.",
+      "surface": "!INSTALL.md; !DEPENDENCIES.md; package inventory",
+      "evidence": "Exact candidate inventory and full serial review on 2026-08-13 found only markdown, JSON metadata, and LICENSE; no executable runtime or automation artifacts are shipped.",
+      "status": "passed"
+    },
+    {
+      "claim": "The package contains three installable skill directories with names matching the manifest and installation guide.",
+      "surface": "src/skills; config/tool.json; !INSTALL.md",
+      "evidence": "Structural inventory and independent cold-reader count check on 2026-08-13 found exactly loop-tension-index, work-tension-release, and erotic-relational-tension-release.",
+      "status": "passed"
+    },
+    {
+      "claim": "Current Letta installation supports one-agent, project, and computer-wide skill scopes at the destinations documented in !INSTALL.md.",
+      "surface": "!INSTALL.md",
+      "evidence": "Verified against https://docs.letta.com/configuration/skills/ on 2026-08-13.",
+      "status": "passed"
+    },
+    {
+      "claim": "For Letta Discord channels, Discord permissions and adapter allowed-channel routing are separate access gates.",
+      "surface": "!INSTALL.md; src/discord-templates/Between-Space_Clinic_Setup.md",
+      "evidence": "Verified against https://docs.letta.com/configuration/channels/discord/ on 2026-08-13.",
+      "status": "passed"
+    },
+    {
+      "claim": "The framework was developed from field observations in its original multi-agent setting beginning in April 2026.",
+      "surface": "!README.md; TOOL.md; src/case-studies",
+      "evidence": "Both included de-identified field cases are dated April 2026 and distinguish observed events from working hypotheses.",
+      "status": "passed"
+    }
+  ],
+  "license": {
+    "spdx": "MIT",
+    "dependencies_reviewed": true,
+    "evidence": "LICENSE, config/tool.json, and !DEPENDENCIES.md agree; no vendored dependency tree or copied executable source is included."
+  },
+  "independent_review": {
+    "validator_rerun": true,
+    "onboarding_followed": true,
+    "evidence": "Independent cold-reader review passed before schema migration; the same independent reviewer then followed final !INSTALL.md from a fresh temporary home, ran all non-Discord smoke tests, verified clean uninstall, checked canonical names/links/counts, and reran the validator on 2026-08-13."
+  },
+  "release_status": "export-ready"
+}
