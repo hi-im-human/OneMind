@@ -1,0 +1,60 @@
+# OneMind Exports — defensive ignore list.
+#
+# This repo is PUBLIC-FACING and shares no history with any private vault or
+# Keep repo. Everything below is a class of file that has already leaked into
+# a staging area at least once (2026-08-13 Construction Yard cleanup found
+# 3,062 node_modules files, a real access.json beside its example, and a live
+# sent-message state file with a real message ID).
+#
+# ⚠️ This list is a backstop, NOT the sanitization gate. A file being ignored
+#    here does not mean the release passed review. The gate is the release
+#    validator; this only prevents the dumbest version of the accident.
+
+# ── build + dependency junk ───────────────────────────────────────────────
+node_modules/
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+dist/
+build/
+*.egg-info/
+
+# ── runtime state: the thing that carries real IDs and real history ───────
+state/
+runtime/
+*.local.json
+*.local.yaml
+*.local.yml
+*.sent-*
+*.log
+
+# ── secrets and live config ──────────────────────────────────────────────
+# Examples and templates are TRACKED on purpose — they are the documentation.
+# The live versions never are.
+.env
+.env.*
+!.env.example
+!env.example
+*.token
+*.key
+*.pem
+access.json
+tool.json
+!*.example.json
+!*.template.json
+!*.example
+!*.template
+
+# ── editor / OS noise ────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~
+
+# ── backups: where stale copies hide and drift ───────────────────────────
+*.bak
+*.bak-*
+*.orig
