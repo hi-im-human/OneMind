@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "install": {
+    "fresh_home_passed": true,
+    "human_reader_passed": false,
+    "agent_reader_passed": true,
+    "costs_disclosed": true,
+    "hands_on_minutes": 16,
+    "evidence": "An independent stateless agent installed the package from a fresh isolated test root on Windows, Python 3.11.9, Claude Code v2.1.231, project-scope install. No source-household knowledge was needed; all information came from !README.md, !INSTALL.md, and tests/SMOKE_TESTS.md. The agent identified every destination, verified the live surface, and removed the package cleanly. Human walkthrough not yet performed."
+  },
+  "paths": {
+    "package_home": "<PACKAGE_ROOT>",
+    "runtime_home": "<WORKSPACE>/.claude/skills/freestyle-beats",
+    "continuity_data_home": "<WORKSPACE> (WORK_GOALS.md, PERSONAL_GOALS.md — agent-owned)",
+    "generated_files": [
+      "<WORKSPACE>/.claude/skills/freestyle-beats/SKILL.md",
+      "<WORKSPACE>/WORK_GOALS.md",
+      "<WORKSPACE>/PERSONAL_GOALS.md",
+      "two hook entries in <WORKSPACE>/.claude/settings.json",
+      "in-session crons (never on disk; session-scoped)"
+    ]
+  },
+  "smoke_tests": {
+    "passed": true,
+    "command": "Follow tests/SMOKE_TESTS.md in order from a fresh install; tests 1-7 with expected outputs named per test",
+    "evidence": "All 7 smoke tests passed on Windows, Python 3.11.9, Claude Code v2.1.231, project-scope install. Test 1: both hooks output valid JSON with hookEventName SessionStart and non-empty additionalContext. Test 2: settings.json parsed as valid JSON, both hook entries present with absolute paths. Test 3: live SessionStart reminder contained both required anchors and excluded stale phrases. Test 4: skill created 5 slots (3 work, 2 personal) within 2-8 range. Test 5: second invocation created 0 duplicates, count remained 5. Test 6: a real beat fired at the scheduled time. Test 7: uninstall removed all package-specific installed content; fresh session showed no reminder, no skill, no slash command."
+  },
+  "factual_runtime_claims": [
+    {
+      "claim": "Registering a skill invocation as a recurring beat prompt attaches the entire skill file per fire; measured on this package's ancestor at ~11,200 chars/fire, ~78k chars/day at 7 daily fires.",
+      "surface": "SKILL.md; !SPECS.md; !DECISIONS.md; !BUGS.md",
+      "evidence": "Measurement performed 2026-08-01 on the ancestor installation and carried with its date. Presented as a dated measurement of the ancestor, not as a claim re-verified on this candidate.",
+      "status": "passed"
+    },
+    {
+      "claim": "In-session crons are session-scoped and auto-expire after 7 days.",
+      "surface": "SKILL.md; !SPECS.md; !DEPENDENCIES.md",
+      "evidence": "Runtime-documented behavior, observed consistently in the ancestor installation through 2026-08. Marked in !DEPENDENCIES.md as observed-not-contractual.",
+      "status": "passed"
+    },
+    {
+      "claim": "Compaction unpredictably kills or keeps in-session crons; both outcomes observed on one runtime in one day.",
+      "surface": "SKILL.md; src/hooks/post_compact_reminder.py; !BUGS.md; !DEPENDENCIES.md",
+      "evidence": "Observed 2026-08-06 (survival), 2026-08-10 (survival then later-break loss, same night), 2026-08-13 (16/16 survival). The package deliberately asserts unpredictability, not either outcome.",
+      "status": "passed"
+    },
+    {
+      "claim": "The runtime's hook validator silently drops additionalContext payloads whose hookEventName is 'PostCompact'; emitting 'SessionStart' from a PostCompact registration validates and delivers.",
+      "surface": "src/hooks/post_compact_reminder.py; !SPECS.md; !DECISIONS.md",
+      "evidence": "Discovered 2026-05-31 in ancestry; workaround in continuous daily use since. Marked as as-of-last-verification in both the hook comment and !SPECS.md. Independent run confirmed the PostCompact hook emits SessionStart (Test 1) and the live SessionStart reminder arrived correctly (Test 3).",
+      "status": "passed"
+    },
+    {
+      "claim": "Package code performs no runtime file writes. The installer/user creates the documented copies and settings entries; the skill reads the goal files and cron state and creates in-session crons; the hooks read stdin and their own package-home scripts and print JSON. The package-home hook scripts are live read dependencies at every hook fire.",
+      "surface": "!INSTALL.md; TOOL.md; !DEPENDENCIES.md; src/hooks/",
+      "evidence": "Independent blind run confirmed: both hooks are stateless print-only scripts (Test 1); the skill's only mutations are cron registrations via CronCreate (Test 4); uninstall removed all package-specific installed content leaving only the structural settings.json skeleton (Test 7). Scope of independent verification: install, live session, and uninstall behavior on this candidate.",
+      "status": "passed"
+    }
+  ],
+  "license": {
+    "spdx": "Apache-2.0",
+    "dependencies_reviewed": true,
+    "evidence": "LICENSE (canonical Apache-2.0 text), config/tool.json, and this receipt agree. No vendored dependencies; requires only the runtime and Python >=3.8, per !DEPENDENCIES.md."
+  },
+  "independent_review": {
+    "validator_rerun": true,
+    "onboarding_followed": true,
+    "evidence": "An independent stateless agent followed the onboarding path (!README.md, !INSTALL.md, tests/SMOKE_TESTS.md) without source-household knowledge, completed the blind install/test/uninstall phase, and recorded evidence. The pre-evidence gate run (with --no-receipt) confirmed the frozen digest e176bd4b3ec90caa07eda89a5259893a871955c02569308fb1164d1982ca17e6 and failed only on intentionally pending evidence fields (release-checklist unchecked items, release-receipt pending fields). After evidence was recorded, the final gate run passed."
+  },
+  "release_status": "export-ready"
+}
