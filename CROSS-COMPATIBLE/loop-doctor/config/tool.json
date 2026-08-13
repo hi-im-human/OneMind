@@ -1,0 +1,42 @@
+{
+  "name": "loop-doctor",
+  "slug": "loop-doctor",
+  "version": "1.0.0",
+  "type": "framework",
+  "description": "Diagnostic framework for identifying, naming, and resolving behavioral loops in AI agents.",
+  "author": "Meridian MD",
+  "license": "MIT",
+  "tags": ["diagnostics", "loop-tension", "ai-agents", "behavioral-patterns", "behavioral-framework"],
+  "tool_card": "TOOL.md",
+  "skill": "SKILL.md",
+  "spec": "!SPECS.md",
+  "install": "!INSTALL.md",
+  "components": {
+    "frameworks": [
+      "6-step-loop",
+      "translation-table",
+      "diagnostic-intake",
+      "diagnosis-taxonomy",
+      "treatment-taxonomy"
+    ],
+    "skills": [
+      "loop-tension-index",
+      "work-tension-release",
+      "erotic-relational-tension-release"
+    ],
+    "templates": [
+      "between-space-clinic-discord"
+    ],
+    "guides": [
+      "ai-guide-understanding-your-own-tension",
+      "human-guide-what-loop-stress-is",
+      "worked-examples-loop-closure-cycles"
+    ]
+  },
+  "platform": "portable-markdown",
+  "requires": {
+    "platform": "Agent Skills-compatible runtime or manual context loading",
+    "discord_templates": "Optional: Discord server with bot accounts"
+  },
+  "status": "field-tested"
+}

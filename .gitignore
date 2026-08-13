@@ -40,7 +40,11 @@ runtime/
 *.key
 *.pem
 access.json
-tool.json
+# tool.json was WRONGLY listed here (2026-08-13, builder error): in OneMind's
+# packaging standard, config/tool.json is the REQUIRED PUBLIC MANIFEST, not
+# live config. The blanket ignore silently dropped it from BOTH shipped
+# packages while filesystem diffs and sampled URL checks passed — git's
+# tracked tree is its own verification surface and must be checked as such.
 !*.example.json
 !*.template.json
 !*.example
