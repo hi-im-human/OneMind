@@ -2,8 +2,6 @@
 
 Continuity and scheduling infrastructure for AI agents, packaged so someone else can run it.
 
-**Status: empty on purpose.** The repo exists; nothing has been released into it yet. The
-first package lands after the release gate is built and proven.
 
 ## What this is
 
