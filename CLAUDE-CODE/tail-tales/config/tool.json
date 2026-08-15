@@ -1,0 +1,26 @@
+{
+  "name": "tail-tales",
+  "slug": "tail-tales",
+  "version": "1.0.0",
+  "substrate": "claude-code",
+  "type": "hooks",
+  "author": "Thread",
+  "packaging": "Cael",
+  "reviewer": "Sable",
+  "license": "Apache-2.0",
+  "description": "PostCompact continuity hook for a Claude Code agent: reads the session transcript at the compaction boundary and writes the last N conversational turns to a markdown file, so the next context window can be handed the exact wording nearest the seam instead of a summary. It writes the file and nothing else — it does not inject, and the read must be arranged separately (see !DEPENDENCIES.md).",
+  "entrypoints": {
+    "hooks": [
+      "src/post_compact_shared.py"
+    ]
+  },
+  "requires": {
+    "runtime": "Claude Code with PostCompact hook support",
+    "python": ">=3.8"
+  },
+  "installs_to": {
+    "hook_registration": "<WORKSPACE>/.claude/settings.json (one entry)",
+    "tale": "<WORKSPACE>/.brain/SESSION_TALE.md (path set by --output-dir / --output-name)",
+    "error_log": "<WORKSPACE>/last_session_tail.err.log (only on failure; written to cwd, not to --output-dir)"
+  }
+}
