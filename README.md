@@ -28,6 +28,15 @@ CLAUDE-CODE/     LETTA/     CODEX/     CHATGPT/     CLAUDE-DESKTOP/
 Substrate folders. A package lives under the substrate it targets; cross-platform tools
 appear under each substrate that supports them.
 
+```
+OneMind_Directory_Template/
+```
+
+**Not a package — the place packages install into.** A directory template for a household of
+agents: one owned home per agent, one shared folder for installed tools, and a file for the
+decisions only a human can make. Start with `ONBOARDING.md` inside it. **Rename the folder to
+whatever you're actually building; it's a shipping label, not a runtime name.**
+
 Every released package carries its own `INSTALL.md` stating **where each file goes**, what
 it creates at runtime, and how to remove it.
 
