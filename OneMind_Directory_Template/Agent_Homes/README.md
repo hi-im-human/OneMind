@@ -1,1 +1,4 @@
-Each folder here is one agent's home and belongs to that agent. It may be their own git repo; this parent is not one shared repo.
+# Runtime workspaces
+
+Each child directory is a separate runtime workspace. It may use an independent git
+repository. The parent directory is a layout container, not a required shared repository.
