@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "package": "selfhook",
-  "release_status": "requires revalidation for 1.1.0 identity-directory component",
+  "release_status": "validated Selfhook 1.1.0 package",
   "runtime_test": {
     "platform": "Windows",
     "shell": "PowerShell 7.6.4",
@@ -25,7 +25,10 @@
     "configuration_errors_are_error_only": "passed",
     "hook_checker_validation_parity": "passed",
     "path_containment_and_regular_file_targets": "passed",
-    "payload_budget_marker": "passed"
+    "payload_budget_marker": "passed",
+    "identity_directory_regression_suite": "55 passed, 0 failed",
+    "identity_directory_configured_template_generation": "passed; root/direct-child entries rendered and depth-2 bait absent",
+    "identity_directory_python_compile": "passed"
   },
   "observed_runtime_constraints": [
     "Hook output above an observed 2–5 KB range can be truncated while reporting success.",
@@ -39,7 +42,7 @@
     "vendored_dependencies": false
   },
   "revalidation_required": [
-    "Run the complete smoke sequence and identity-directory suite after the 1.1.0 package behavior change.",
-    "Record an exact-workspace runtime delivery receipt before declaring a release ready."
+    "Run the complete smoke sequence and identity-directory suite after any subsequent package behavior change.",
+    "Record an exact-workspace runtime receipt for the 1.1.0 PreCompact registration before claiming live-runtime coverage."
   ]
 }
