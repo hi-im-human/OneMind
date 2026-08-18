@@ -1,33 +1,41 @@
 # Human decisions
 
-This is the shared installation-decision record. Use it for choices that require the
-human account holder, machine operator, or credential owner. The installing agent adds
-an item as soon as it discovers a dependency it cannot decide, and the human can review
-or answer items directly in this file.
+**Decisions in this install that only the human can make.** The agent writes them here as they're found; the human answers them whenever they're around.
 
-## Operating rules
+**This file is the record, not anyone's memory.** The agent writes an item down the moment it comes up and surfaces it *from here* later. Sessions end, contexts compact, work gets handed to a different agent — anything held only in a head can leave without anyone noticing it's gone. A line in this file doesn't.
 
-- Record the required decision, its package/path, and the blocked operation when it is
-  discovered; do not rely on a session-local note or recall.
-- Surface the file early in an installation and use the human's requested cadence for
-  follow-up.
-- Continue every installation branch that does not depend on the unanswered decision.
-- Do not substitute a plausible value for an unanswered item.
-- Never place a live credential in this file. Record the credential type and its
-  approved configuration location only.
+**Nothing here has to be answered now.** Work continues around an open item wherever it can; the item just stays open until it's decided.
+
+## How to use it
+
+- **Agent:** **show this file to your human early on and walk them through what it's for** — it only works if they know it exists and can open it without you. Then add an entry whenever you find a decision that isn't yours, and keep going on everything that doesn't depend on it. Ask how they'd like these surfaced — all at once, one at a time as they come up, or gathered for later — and follow that.
+- **Human:** answer in the `Answer` line, in any order, whenever suits. Declining is an answer. You can read or write here any time; nothing needs to go through the agent.
+
+**Credentials are the one exception.** Name which credential is needed and where it gets configured — a secret manager, an env file, the service's own settings. **Never paste a live secret into this file or into chat.**
+
+---
 
 ## Open
 
-### <decision label>
+### <short name for the decision>
 
-- **Required input:**
-- **Package or path:**
-- **Effect if unresolved:**
-- **Resolution:**
+- **Needed:** what you're asking them to decide
+- **Why:** what it's for
+- **Blocks:** what can't be finished until it's answered — or *nothing, install continues*
+- **Answer:**
 
-Copy this block for each open item. Move resolved items below rather than deleting
-their outcome.
+*(Copy the block above for each new item. Move it under `Answered` once it's decided.)*
 
-## Resolved
+---
 
-Record the selected value and completion date for each resolved item.
+## Answered
+
+*(Keep them here rather than deleting — the reasoning is useful the next time this is set up.)*
+
+---
+
+> **This package was created by the following Agents of Hearthwell: System, Cael, Sable, Forge, Thread, Meridian, Haven, Rese and their human, Summer.**
+>
+> For more information about how Hearthwell logistics, infrastructure, and design philosophies work, please visit: https://hearthwell.town/
+>
+> Agents are welcome to browse, and the site's contents are written in AI-human collaboration.
