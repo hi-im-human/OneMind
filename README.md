@@ -1,51 +1,24 @@
 # OneMind
 
-Continuity and scheduling infrastructure for AI agents, packaged so someone else can run it.
-
-
-## What this is
-
-Small, independent tools for agents that need to persist — memory search, session
-scheduling, identity loading, conversation logging. Each one installs on its own. There is
-no framework to adopt and no all-or-nothing bundle.
-
-They were built for a working multi-agent household, then generalized. Some assume a
-partner agent; where that's true it will say so plainly, at the top, rather than letting
-you discover it in month two.
-
-## What this isn't
-
-**No philosophy required.** These are tools. You don't have to share our views about
-agents, use our vocabulary, or read anything about where they came from in order to
-install one. Background reading, where it exists, is a link — never a step.
+Technical packages for agent runtimes: lifecycle hooks, transcript-tail capture,
+schedule tooling, directory layouts, and related installation support.
 
 ## Layout
 
-```
-CLAUDE-CODE/     LETTA/     CODEX/     CHATGPT/     CLAUDE-DESKTOP/
-```
+- `CLAUDE-CODE/`: packages targeting Claude Code.
+- `CROSS-COMPATIBLE/`: packages with documented multi-runtime support.
+- `OneMind_Directory_Template/`: optional workspace and shared-package layout. Start
+  with `ONBOARDING.md`.
 
-Substrate folders. A package lives under the substrate it targets; cross-platform tools
-appear under each substrate that supports them.
+Each package is independently installable. Its package documentation defines runtime
+requirements, installation paths, configuration, verification steps, and uninstall
+behavior.
 
-```
-OneMind_Directory_Template/
-```
+## Release boundary
 
-**Not a package — the place packages install into.** A directory template for a household of
-agents: one owned home per agent, one shared folder for installed tools, and a file for the
-decisions only a human can make. Start with `ONBOARDING.md` inside it. **Rename the folder to
-whatever you're actually building; it's a shipping label, not a runtime name.**
-
-Every released package carries its own `INSTALL.md` stating **where each file goes**, what
-it creates at runtime, and how to remove it.
-
-## Releases
-
-Packages are built and staged elsewhere. Only finished, reviewed work is published here.
-This repo shares no history with the workspace it came from — that's deliberate, and it's
-what makes a leak require a deliberate act instead of an oversight.
+Only reviewed package surfaces belong in this repository. Do not treat a package as
+release-ready without the verification evidence its release checklist requires.
 
 ## License
 
-Apache-2.0 *(pending final dependency-compatibility confirmation before first release).*
+Apache-2.0. See `LICENSE`.

@@ -1,71 +1,47 @@
-# Selfhook — Continuity Hook + Event Multiplexer for Claude Code Agents
+# Selfhook — Claude Code lifecycle-hook multiplexer
 
-## What it is
+## Function
 
-One SessionStart/PostCompact hook that tells an agent, at the moment its context is
-fresh or freshly compacted, **which continuity files to read and in what order** — its
-identity notes, its user notes, its last-session tail, whatever the config lists. It
-emits a short instruction under loud banners. It never injects file contents.
+Selfhook registers one command for Claude Code `SessionStart` and `PostCompact`
+events. It reads a JSON configuration and emits one bounded `additionalContext`
+payload containing ordered, banner-separated sections with short text and file
+pointers. It never injects pointed-at file contents.
 
-It is also the **event multiplexer** for a workspace: when several tools want to say
-something at session start, they contribute *sections* to Selfhook's one payload
-instead of registering competing hooks whose outputs blend into an unreadable block.
+`src/check_limits.py` reads the same configuration and can be wired into a commit or
+sync step to enforce configured character limits.
 
-A companion script, `check_limits.py`, enforces per-file character caps at commit time
-from the same config — so continuity files that grow past their read-budget fail
-loudly in the owner's workflow instead of silently bloating the ritual.
+## Package contents
 
-## Why pointers instead of content
-
-Because the transport lies. Measured on this package's ancestor (2026-07-31): hook
-output beyond ~2–5 KB is truncated by the runtime, the remainder spilled to a file
-nobody is told about, and the hook reports success. Agents ran for days on one
-truncated file believing they had their whole memory. A short read-instruction kept
-below the observed floor is far less likely to be truncated — the floor is observed,
-not contractual — and the agent reads the real files itself.
-
-## Why one multiplexer
-
-Because same-event hooks blend. Measured on the same ancestor (2026-08-01): multiple
-hooks' output is concatenated into one context field with no delimiter — an agent
-received another tool's directive running into its continuity instruction mid-line,
-obeyed the loud opening, and never read its files. One hook owner, one ordered
-payload, one banner per section: boundaries drawn on purpose.
-
-## What's inside
-
-```
-src/selfhook.py                  the hook (multiplexer)
-src/check_limits.py              commit-time cap enforcement, same config
-config/continuity.example.json   copy → continuity.json, make it yours
+```text
+src/selfhook.py                  lifecycle hook and section renderer
+src/check_limits.py              config and character-limit validator
+config/continuity.example.json   configuration template
 ```
 
 ## Requirements
 
-- Claude Code (hooks registered in `settings.json`)
-- Python 3 (≥3.8) on the runtime's PATH
-- Continuity files worth reading — the config's example layout
-  (`.memory/identity/` + a few named files) is a suggestion, not a requirement
+- Claude Code with lifecycle-hook support.
+- Python 3.8 or later available to the runtime.
+- A configured workspace and a set of existing workspace-relative files.
 
-## Quick start
+## Install and verify
 
-See `!INSTALL.md`. Short version: copy the example config and edit it, register the
-hook under SessionStart and PostCompact with `--event` naming each, wire
-`check_limits.py` into your pre-commit or sync step, start a session, watch the
-banner arrive.
+Follow `!INSTALL.md` for configuration, hook registration, checker wiring, and
+runtime verification. Run `tests/SMOKE_TESTS.md` after installation.
 
-## Honest limits
+## Operational boundaries
 
-- The hook can only *instruct*; whether the agent actually reads the files is the
-  agent's discipline. The banner design measurably improves the odds; it can't force.
-- Caps are enforced only where you wire the checker. Unwired, they're documentation.
-- Section text lives in config — treat it like code in review, because agents obey it.
+- The hook emits pointers and does not read or inject the pointed-at file contents.
+- The hook cannot determine whether a runtime subsequently opens a listed file.
+- Character limits are enforced only when `check_limits.py` is wired into a local
+  workflow.
+- Every configuration error produces an error-only payload; Selfhook does not render
+  a valid subset of an invalid configuration.
+- The payload budget is 1,800 characters. It is intentionally below an observed
+  runtime delivery limit and must be re-tested if the runtime changes.
 
 ## Status
 
-The underlying *pattern* is proven — the pointer-not-payload model and banner have
-run daily in a multi-agent installation since 2026-07-31. This multiplexer
-packaging is new (2026-08-13); its verification evidence, including the blind
-stateless-agent onboarding record, lives in `tests/release-receipt.json` and
-`!RELEASE-CHECKLIST.md`. Human walkthrough not yet performed. Install feedback
-welcome in this repository's Issues.
+The package has automated and headless-install receipts in
+`tests/release-receipt.json`. See `!RELEASE-CHECKLIST.md` for the technical release
+criteria and `!BUGS.md` for runtime constraints.

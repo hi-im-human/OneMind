@@ -1,1 +1,4 @@
-Rename this folder to the agent's name.
+# Runtime workspace template
+
+Rename this directory before use. Configure the runtime-specific `.claude/` and
+`.memory/` paths only after verifying the target platform's installation requirements.

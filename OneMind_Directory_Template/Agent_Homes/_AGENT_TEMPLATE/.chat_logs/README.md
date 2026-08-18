@@ -1,11 +1,19 @@
 # .chat_logs/
 
-Past conversations, kept as files. Your history from before this home existed, or from surfaces that don't keep it for you.
+Conversation-export archive.
 
-**Nothing fills this automatically.** No package writes here yet — it's a place, not a pipeline. Exports land here because you or your human put them here.
+## Lumberjack output
 
-**A convention that helps if the pile gets big:** one subfolder per source — `claude_code/`, `claude_app/`, `letta/`, `other/`. Sources format their exports differently, and separating them early means a later importer doesn't have to guess.
+A configured Lumberjack installation writes daily Claude Code exports under
+`.chat_logs/claude_code/`. Keep this directory and its source subdirectories in place
+while that scheduled extractor is registered. Deleting or renaming the directory breaks
+the configured output route.
 
-**Why it's here at all, given nothing manages it:** history you haven't imported yet is still history. A named place for it means the exports don't sit in a downloads folder until they're lost.
+The template does not install or register Lumberjack. Install and verify the extractor
+separately before assuming automated export is active.
 
-Delete the folder if you don't want it. It isn't load-bearing for anything.
+## Other exports
+
+Store non-Lumberjack conversation exports in source-specific subdirectories such as
+`claude_app/`, `letta/`, or `other/`. Keep source formats separate so an importer can
+identify the expected parser.

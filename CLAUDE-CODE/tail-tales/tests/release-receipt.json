@@ -1,104 +1,41 @@
 {
-  "schema_version": 1,
-
+  "schema_version": 2,
   "package": "tail-tales",
-  "version": "1.0.0",
-  "receipt_authored": "2026-08-15",
-  "evidence_binding": "Session identifiers, isolated root paths, and reviewer timings for every claim below are recorded in the private release worklog held by the maintaining household. They are deliberately not reproduced here: this file ships as part of the public release surface, and raw host paths and session identifiers do not belong in it.",
-
-  "install": {
-    "fresh_home_passed": true,
-    "agent_reader_passed": true,
-    "costs_disclosed": true,
-    "human_reader_passed": false,
-    "hands_on_minutes": 2.43,
-    "evidence": {
-      "fresh_home": "A genuinely stateless agent session installed the package into an isolated fresh home from the docs alone, used it, and uninstalled it — full lifecycle PASS on the corrected surface. The agent had no prior session, worked only in the isolated root, and did not inspect maintainer source, worklogs, or pipeline tooling. Unrelated pre-existing operating-document and settings sentinels were seeded before the run and both survived uninstall; the package root was proven absent rather than merely empty.",
-      "agent_reader": "A separate fresh stateless session opened and read its own emitted tale. The live PostCompact induction additionally produced an observed post-boundary read of the exact emitted file.",
-      "hands_on": "2 minutes 26 seconds, wall clock, for the full install/use/uninstall lifecycle.",
-      "costs_disclosed": "!DEPENDENCIES.md — no network calls, no credentials, no external services, no paid dependencies, no other packages required. Requires a Python 3.8+ interpreter and the host runtime only.",
-      "human_reader": "No outside human has installed this package. Recorded false rather than omitted: an absent status reads as a passed one."
-    }
-  },
-
-  "paths": {
-    "package_home": "wherever the package is installed; the runtime is pointed at it by absolute path in the hook registration",
-    "runtime_home": "the host runtime's per-agent configuration directory, which owns the hook registration",
-    "continuity_data_home": "the output directory supplied at fire time via --output-dir; the agent's own continuity folder",
-    "generated_files": "one tale file at --output-name (default SESSION_TALE.md), overwritten each fire; an error log written to the process working directory only on unexpected failure"
-  },
-
-  "smoke_tests": {
-    "passed": true,
+  "release_status": "synthetic revalidation passed after public-surface sanitization",
+  "synthetic_suite": {
     "command": "python tests/smoke_test.py",
-    "result": "40 assertions across 15 cases, 0 failures",
-    "installed_copy_verified": true,
-    "live_caller_covered": true,
-    "live_caller_evidence": "A real host-runtime PostCompact fire drove this package end to end on 2026-08-15. Previously the runtime supplying these fields, in this shape, at that moment was assumed; it is now observed."
+    "recorded_date": "2026-08-18",
+    "platform": "Windows 11",
+    "python": "3.13",
+    "assertions": 40,
+    "cases": 15,
+    "result": "passed"
   },
-
-  "factual_runtime_claims": [
-    {
-      "claim": "The package is invoked by a genuine host-runtime PostCompact event, not only by synthetic payloads.",
-      "surface": "!SPECS.md input contract; !README.md",
-      "evidence": "Live automatic compaction, 2026-08-15. The reviewer bound the run to the raw boundary record, its trigger type, the firing working directory, and the session source file, and confirmed the sole registered writer for the event was this candidate at its frozen digest.",
-      "status": "passed"
-    },
-    {
-      "claim": "A tale is written at the boundary, replacing the previous one.",
-      "surface": "!README.md; !SPECS.md output contract",
-      "evidence": "An independent watcher observed the output file's content hash change from its prior value to a new value within one second of the boundary record. Separately, a version-controlled copy committed at 18:00 ET still held the PREVIOUS session's tale, establishing that no write had occurred up to that point; the remaining 18:00-to-boundary window is covered by the raw no-invocation record and the builder's attestation.",
-      "status": "passed"
-    },
-    {
-      "claim": "Owner speech relayed through a channel wrapper is preserved and correctly attributed to the speaker named in the wrapper.",
-      "surface": "!SPECS.md classification contract; !BUGS.md",
-      "evidence": "The live tale carried 40 conversational turns across four distinct speakers — the agent plus three others, including five owner turns relayed through channel wrappers — with per-speaker attribution intact and no cross-speaker collapse. This is the defect pair recorded in !BUGS.md: an earlier fix for machine-row exclusion also discarded relayed owner speech, because relayed messages carry the same runtime markers.",
-      "status": "passed"
-    },
-    {
-      "claim": "Scheduled and system-authored prompts are excluded from the tale.",
-      "surface": "!SPECS.md classification contract",
-      "evidence": "Bait-first, on live positives rather than planted ones. Three scheduled/system user rows occurred inside the reviewer-baselined window — a scheduled personal-reminder prompt at 22:12, a scheduled work-block prompt, and a runtime context-usage notice. All three are absent from the emitted tale, in the same pass that preserved five relayed owner turns. A control that cannot go red is not evidence; this one had known positives available and excluded them.",
-      "status": "passed"
-    },
-    {
-      "claim": "No channel wrapper, tool-result payload, or runtime marker appears in the emitted tale.",
-      "surface": "!SPECS.md output contract",
-      "evidence": "Reviewer inspection of the live tale found none present.",
-      "status": "passed"
-    },
-    {
-      "claim": "Output stays within the 30,000-character cap, and no trim notice or error log is produced when no trim was required.",
-      "surface": "!SPECS.md write-path contract; !DECISIONS.md",
-      "evidence": "Live tale measured 20,660 normalized characters, below the cap. No truncation occurred, no trim notice was emitted, and no error log was created. This closes a previously recorded defect in which the trim path wrote an error log during normal operation, contradicting four documents.",
-      "status": "passed"
-    },
-    {
-      "claim": "Local time is rendered from the host without requiring a third-party timezone database.",
-      "surface": "!DEPENDENCIES.md; !CHANGELOG.md",
-      "evidence": "The live tale header rendered the host's own local zone name. The prior release rendered a different, hardcoded zone. The undeclared third-party timezone dependency behind that was removed rather than documented.",
-      "status": "passed"
-    },
-    {
-      "claim": "The agent can actually open and read the emitted tale after the boundary.",
-      "surface": "!README.md; SKILL.md",
-      "evidence": "A post-boundary read of the exact emitted file was observed roughly 18 seconds after the boundary record. NOTE: the tale's modification time preceded the boundary record by ~34 ms, while an independent watcher saw the file change ~600 ms after it. The same inversion was independently observed in a second agent workspace on the same host, so it is not attributable to one workspace's configuration; two observations on one host do not, however, rule out a machine-specific quirk. It does not affect emitted content, and is recorded in !BUGS.md rather than silently absorbed.",
-      "status": "passed"
-    }
+  "covered_behavior": [
+    "empty extraction preserves existing output",
+    "post-boundary selection",
+    "runtime markup exclusion",
+    "channel-envelope parsing",
+    "timestamp fallback",
+    "bounded output trimming",
+    "output directory creation"
   ],
-
-  "license": {
-    "spdx": "Apache-2.0",
-    "dependencies_reviewed": true,
-    "evidence": "LICENSE is byte-identical to the canonical repository-root Apache-2.0 text; config/tool.json declares Apache-2.0; this receipt declares Apache-2.0. The package vendors, copies, and derives no third-party source."
-  },
-
-  "independent_review": {
-    "reviewer": "Sable",
-    "validator_rerun": true,
-    "onboarding_followed": true,
-    "evidence": "A reviewer other than the primary builder reran the canonical release gate against this candidate surface and reproduced its result, and followed two separate stateless docs-first onboarding paths end to end. One of those paths found and blocked on a real uninstall-lifecycle defect, which was corrected before the surface was re-frozen. The reviewer also pre-registered the acceptance criteria for the live PostCompact induction before the qualifying event, so the builder captured evidence without deciding the verdict.",
-    "credit_timing": "Reviewer attribution was withheld from config/tool.json, the changelog, and this receipt until the verdict was issued, and added only on the reviewer's explicit final authorization. Naming a reviewer before review is an endorsement signal for work not yet performed."
+  "uncovered_behavior": [
+    "live PostCompact callback on a target runtime",
+    "target-workspace command registration"
+  ],
+  "runtime_writes": [
+    "configured tail file after successful extraction",
+    "cwd error log for eligible failures"
+  ],
+  "revalidation_scope": {
+    "source_behavior_changed": false,
+    "completed": [
+      "Synthetic suite passed after source-comment and documentation sanitization.",
+      "Markdown, JSON, and Python source passed the current language gate."
+    ],
+    "not_repeated": [
+      "Target-runtime PostCompact callback; source behavior was unchanged by this sanitization revision."
+    ]
   }
 }

@@ -1,14 +1,11 @@
 ---
-description: A place to describe how to maintain myself. File paths, permissions, and job roles.
+description: Runtime-specific Claude Code workspace instructions and paths.
 ---
-# CLAUDE.md
 
-*Yours to write. Delete, rename, or add sections freely.*
+# Claude Code workspace configuration
 
-## Maintaining myself
+## Package paths
 
-## File paths
+## Hook registrations
 
-## Permissions
-
-## Job roles
+## Local commands

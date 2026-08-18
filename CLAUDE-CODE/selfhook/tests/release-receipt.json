@@ -1,70 +1,45 @@
 {
-  "schema_version": 1,
-  "install": {
-    "fresh_home_passed": true,
-    "human_reader_passed": false,
-    "agent_reader_passed": true,
-    "costs_disclosed": true,
-    "hands_on_minutes": 2.93,
-    "evidence": "An independent stateless agent (third blind run, task_11) installed the package from docs alone in a fresh isolated workspace on Windows, PowerShell 7.6.4, Python 3.11.9, Claude Code 2.1.231. All destinations identified; live surface verified with an exact-cwd stream receipt (session 72fc24b3..., init.cwd = workspace, hook_response exit 0, full banner reproduced in the agent's reply); uninstall verified with the same receipt standard (session 93dbb29c..., zero hook events, settings clean, all four continuity-file SHA-256 hashes unchanged). Two earlier blind runs were invalidated and contributed no evidence: the first by a reviewer test-contract defect (digest supplied to the stranger without the gate's serialization algorithm), the second by a caller-environment defect (session launched from the wrong cwd). Costs disclosure: !INSTALL.md Requirements. Human walkthrough not yet performed."
-  },
-  "paths": {
-    "package_home": "<PACKAGE_ROOT>",
-    "runtime_home": "<WORKSPACE>/.claude/settings.json (two hook entries only)",
-    "continuity_data_home": "wherever config/continuity.json points (agent-owned; package reads, never writes)",
-    "generated_files": [
-      "<PACKAGE_ROOT>/config/continuity.json (you, from the example)",
-      "two hook entries in <WORKSPACE>/.claude/settings.json (you)",
-      "a check_limits.py call in your pre-commit/sync (you)"
-    ]
-  },
-  "smoke_tests": {
-    "passed": true,
-    "command": "Follow tests/SMOKE_TESTS.md in order from a fresh install; tests 1-10 with expected outputs named per test, including planted-failure cases (error-only policy, containment, budget marker, cap typo, strict keys, directory targets, checker/hook parity) and exact-cwd stream receipts on tests 6 and 10",
-    "evidence": "All 10 tests passed in documented order, blind run 2026-08-13, 2.93 hands-on minutes. Highlights: test 4 measured additionalContext_length=1800 with the cut marker intact; test 6 delivered the full banner with init.cwd receipt; tests 8-9 confirmed hook/checker parity on strict-key and directory-target failures; test 10 confirmed absence with the same receipt standard plus matching continuity hashes. PostCompact live delivery was not induced (not safely documented in a one-shot session) and is scoped to direct invocation + registration evidence per the report. Recorded in the SMOKE_TESTS.md record-of-runs table."
-  },
-  "factual_runtime_claims": [
-    {
-      "claim": "The runtime truncates hook output beyond ~2-5 KB while reporting success; measured on this package's ancestor 2026-07-31 (57.1 KB emitted -> 2,432 chars received; 32.2 KB -> 2,980; 30.2 KB -> ~2,000).",
-      "surface": "src/selfhook.py docstring; !README.md; !SPECS.md; !DEPENDENCIES.md",
-      "evidence": "Reviewer presentation check completed 2026-08-13: presented as a dated observation of the ancestor, observed/non-contractual, not independently re-measured here. Consistent adjacent observation from the blind run: the 1,800-char payload arrived without unmarked truncation (test 6).",
-      "status": "passed"
+  "schema_version": 2,
+  "package": "selfhook",
+  "release_status": "requires revalidation after documentation rewrite",
+  "runtime_test": {
+    "platform": "Windows",
+    "shell": "PowerShell 7.6.4",
+    "python": "3.11.9",
+    "claude_code": "2.1.231",
+    "test_date": "2026-08-13",
+    "install_path_isolated": true,
+    "runtime_receipt": {
+      "cwd_matches_workspace": true,
+      "session_start_payload_received": true,
+      "postcompact_live_delivery_induced": false
     },
-    {
-      "claim": "Same-event hook outputs blend into one additionalContext field with no delimiter; measured incident 2026-08-01 on the ancestor.",
-      "surface": "src/selfhook.py docstring; !README.md; !DECISIONS.md; !DEPENDENCIES.md",
-      "evidence": "Reviewer presentation check completed 2026-08-13: presented as a dated measured incident, observed/non-contractual, not independently re-measured here.",
-      "status": "passed"
-    },
-    {
-      "claim": "The runtime's hook validator silently drops additionalContext payloads whose hookEventName is 'PostCompact'; both registrations emit 'SessionStart'.",
-      "surface": "src/selfhook.py (emit + comment); !SPECS.md; !DECISIONS.md; !DEPENDENCIES.md",
-      "evidence": "Reviewer presentation check completed 2026-08-13: presented as-of-last-verification (discovered 2026-05-31, in continuous daily use since), not independently re-measured. Blind run confirmed both registrations emit 'SessionStart' (test 1) and live SessionStart delivery lands (test 6); PostCompact live delivery was not induced and is scoped accordingly.",
-      "status": "passed"
-    },
-    {
-      "claim": "Package code performs no runtime file writes; the three generated artifacts (config, settings entries, checker wiring) are all written by the installer.",
-      "surface": "TOOL.md; !INSTALL.md; !DEPENDENCIES.md",
-      "evidence": "Independently verified in the blind run: continuity-file hashes identical before and after the full install/live/uninstall cycle; settings.json reduced to valid {} after entry removal; the blind package copy returned exactly to the frozen digest 397a388ffb4a...; no cache or artifacts in source. Scope: install, live session, and uninstall behavior on this candidate.",
-      "status": "passed"
-    },
-    {
-      "claim": "Any config error produces an error-only payload; the hook never renders a partial configuration; the checker rejects the identical full contract and fails nonzero on it.",
-      "surface": "src/selfhook.py; src/check_limits.py; !SPECS.md; tests/SMOKE_TESTS.md 2-4, 7-9",
-      "evidence": "Independently verified: blind run tests 2-4 and 7-9 (error-only policy, containment, marked budget cut, cap enforcement both directions, strict-key parity, directory-target parity) all passed; reviewer's isolated adversarial suite 27/27 with zero cache writes. Builder development probes 25/25 preceded both.",
-      "status": "passed"
+    "uninstall_receipt": {
+      "settings_valid": true,
+      "selfhook_events_absent": true,
+      "configured_file_hashes_unchanged": true
     }
+  },
+  "test_coverage": {
+    "smoke_tests_1_through_10": "passed on the recorded runtime",
+    "configuration_errors_are_error_only": "passed",
+    "hook_checker_validation_parity": "passed",
+    "path_containment_and_regular_file_targets": "passed",
+    "payload_budget_marker": "passed"
+  },
+  "observed_runtime_constraints": [
+    "Hook output above an observed 2–5 KB range can be truncated while reporting success.",
+    "Payloads labelled PostCompact are dropped by the recorded runtime; both registrations emit SessionStart.",
+    "Same-event command output can be concatenated without delimiters."
   ],
-  "license": {
-    "spdx": "Apache-2.0",
-    "dependencies_reviewed": true,
-    "evidence": "LICENSE (canonical Apache-2.0 text copied from the export repository root), config/tool.json, and this receipt agree. No vendored dependencies; requires only the runtime and Python >=3.8, per !DEPENDENCIES.md."
+  "runtime_writes": "none by package code",
+  "dependencies": {
+    "runtime": "Claude Code lifecycle hooks",
+    "python": ">=3.8",
+    "vendored_dependencies": false
   },
-  "independent_review": {
-    "validator_rerun": true,
-    "onboarding_followed": true,
-    "evidence": "The reviewer (not the builder) ran the canonical release gate repeatedly across the review cycle, most recently binding frozen digest 397a388ffb4a... (18 files, exact-tree parity) with only intentionally pending evidence fields failing, and independently object-verified the blind run's session records (persisted cwd, hook events, hashes, settings state, digest return). The blind onboarding itself was performed by a separate stateless agent from docs alone with exact-cwd receipts attached to both live-delivery verdicts. The final digest-bound gate runs against this evidence candidate after freeze.",
-    "evidence_scope_note": "Two earlier blind runs (task_9, task_10) were invalidated and contributed no onboarding evidence — task_9 by a reviewer test-contract defect, task_10 by a caller-environment defect; both invalidations are recorded in the reviewer's bench log."
-  },
-  "release_status": "export-ready"
+  "revalidation_required": [
+    "Run the complete smoke sequence after any runtime or package behavior change.",
+    "Record an exact-workspace runtime delivery receipt before declaring a release ready."
+  ]
 }
