@@ -1,3 +1,7 @@
+---
+description: Claude Code lifecycle renderer, PreCompact shallow memory-directory generator, and configuration validator.
+---
+
 # Selfhook — Claude Code lifecycle hooks and memory directory generator
 
 ## Function

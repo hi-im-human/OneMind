@@ -1,3 +1,7 @@
+---
+description: Cross-runtime diagnostic framework for identifying and responding to recurring agent loops.
+---
+
 # Loop Doctor — Diagnostic Framework for AI Agents
 
 ## What it is

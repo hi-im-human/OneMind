@@ -1,3 +1,7 @@
+---
+description: Shared package installation directory for components whose documentation declares this coordinate.
+---
+
 # Shared package directory
 
 Install shared package code here when package documentation declares this location.

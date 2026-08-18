@@ -1,3 +1,7 @@
+---
+description: Durable personal scheduler for Claude Code session-scoped cron work, with local state recovery and maintenance.
+---
+
 # Freestyle Beats
 
 **Personal persisted scheduling for Claude Code's session-scoped cron tools.**

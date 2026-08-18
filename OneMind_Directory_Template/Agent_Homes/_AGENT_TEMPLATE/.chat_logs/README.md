@@ -1,3 +1,7 @@
+---
+description: Runtime conversation-export archive, including configured Lumberjack output locations.
+---
+
 # .chat_logs/
 
 Conversation-export archive.

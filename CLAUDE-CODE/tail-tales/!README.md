@@ -1,3 +1,7 @@
+---
+description: Claude Code PostCompact transcript-tail hook that writes bounded Markdown continuity tails.
+---
+
 # Tail Tales — Claude Code PostCompact transcript-tail hook
 
 ## Function
