@@ -30,7 +30,7 @@
 
 ## Answered
 
-*(Keep them here rather than deleting — the reasoning is useful the next time this is set up.)*
+*(Answered items are retained rather than deleted, so the recorded reasoning remains available to later setups.)*
 
 ---
 
