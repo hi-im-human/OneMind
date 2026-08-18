@@ -29,6 +29,13 @@ schedule tooling, directory layouts, and related installation support.
   - [Energy_Co/](OneMind_Directory_Template/Energy_Co/README.md) — Shared package installation directory for components whose documentation declares this coordinate.
 <!-- END GENERATED PACKAGE DIRECTORY -->
 
+This block is generated from `description:` frontmatter in tracked package
+`README.md` or `!README.md` files. Regenerate it from the repository root with:
+
+```text
+python _meta/generate_readme_tree.py --repo . --write --quiet
+```
+
 Each package is independently installable. Its package documentation defines runtime
 requirements, installation paths, configuration, verification steps, and uninstall
 behavior.
