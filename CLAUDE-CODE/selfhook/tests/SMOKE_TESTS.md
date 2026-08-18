@@ -154,6 +154,30 @@ mechanism that falsely FAILS install delivery. All four checks mandatory:
 file changed. **INVALID (rerun, not FAIL/PASS) if:** check 1's cwd receipt shows
 the session started outside the workspace.
 
+## 11. Generated memory directory — both directions
+
+Run the packaged generator regression suite:
+
+```text
+python "<PACKAGE_ROOT>/tests/identity_directory_tests.py"
+```
+
+**Expect:** every listed case passes. The suite covers byte-preserved LF/CRLF/BOM
+writes, malformed marker refusals, frontmatter postconditions, concurrent-edit
+refusal, shallow `.memory` scope, direct child folders by name, depth-2 bait absence,
+missing-description tolerance, and both-direction controls.
+
+Then run the installed generator directly:
+
+```text
+python "<PACKAGE_ROOT>/src/identity_directory.py" --config "<PACKAGE_ROOT>/config/continuity.json" --write --quiet
+```
+
+**Expect:** `WRITTEN` or `UP TO DATE`. Inspect the marker block: root Markdown files,
+top-level folder headings, and direct child entries appear; no depth-2 file appears.
+**FAIL if:** a file outside the marker block changes, the command reports a refusal on
+a correctly prepared target, or depth-2 content renders.
+
 ---
 
 ## Record of runs

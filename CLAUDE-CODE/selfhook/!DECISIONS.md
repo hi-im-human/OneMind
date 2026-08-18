@@ -15,6 +15,12 @@
 - **Fail closed for character caps.** The hook and checker use the same validation
   path. Missing, malformed, or unreadable cap targets fail validation instead of
   disabling enforcement.
+- **One workspace authority for the directory generator.** The generator imports
+  Selfhook's configuration loader/validator and derives `<workspace>/.memory`; it
+  does not introduce a second file-list or memory-directory setting.
+- **Default PreCompact generation.** Normal installation registers the generator with
+  `--write --quiet`. Its refusal paths protect invalid targets without a separate
+  enable field.
 
 ## File and path contract
 
@@ -23,6 +29,8 @@
   must target regular files.
 - Glob patterns list every match in sorted order; Selfhook does not select an
   arbitrary first match.
+- **Shallow `.memory` index.** Root files and each top-level folder's direct files and
+  folders are listed. Child-folder contents are outside the index boundary.
 
 ## Delivery contract
 

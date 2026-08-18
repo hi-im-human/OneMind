@@ -1,9 +1,13 @@
 # Changelog — Selfhook
 
-## Unreleased
+## 1.1.0 — candidate
 
-- Documentation rewritten as technical package documentation.
-- Example configuration now uses generic startup-file names and neutral section text.
+- Added the `.memory` directory generator, a 55-case regression suite, and a clean
+  marker-ready `MEMORY.md` template.
+- Normal installation registers the PreCompact `--write --quiet` refresh alongside
+  the existing renderer registrations.
+- The generated index lists the `.memory` root and one child level only, preserving
+  bytes outside its marker pair.
 
 ## 1.0.0
 

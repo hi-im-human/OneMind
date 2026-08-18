@@ -5,6 +5,17 @@ description: Operating and maintenance procedure for Selfhook's Claude Code life
 
 # Selfhook — Operating procedure
 
+## PreCompact directory refresh
+
+The normal Selfhook installation registers `identity_directory.py` at PreCompact with
+`--write --quiet`. It derives `<workspace>/.memory` from the same validated
+configuration as the renderer and replaces only the marker block in `MEMORY.md`.
+
+For a new workspace, begin with `templates/MEMORY.md`. For an existing file, retain
+its contents and add the marker pair after frontmatter before registering the command.
+The index lists the `.memory` root and one child level only; child-folder contents do
+not appear. Run `tests/identity_directory_tests.py` after modifying this component.
+
 ## When a banner arrives
 
 The payload contains section text and file pointers only; it does not contain the

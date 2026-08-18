@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "package": "selfhook",
-  "release_status": "requires revalidation after documentation rewrite",
+  "release_status": "requires revalidation for 1.1.0 identity-directory component",
   "runtime_test": {
     "platform": "Windows",
     "shell": "PowerShell 7.6.4",
@@ -32,14 +32,14 @@
     "Payloads labelled PostCompact are dropped by the recorded runtime; both registrations emit SessionStart.",
     "Same-event command output can be concatenated without delimiters."
   ],
-  "runtime_writes": "none by package code",
+  "runtime_writes": "identity_directory.py replaces only the marked directory block in <workspace>/.memory/MEMORY.md when invoked with --write",
   "dependencies": {
     "runtime": "Claude Code lifecycle hooks",
     "python": ">=3.8",
     "vendored_dependencies": false
   },
   "revalidation_required": [
-    "Run the complete smoke sequence after any runtime or package behavior change.",
+    "Run the complete smoke sequence and identity-directory suite after the 1.1.0 package behavior change.",
     "Record an exact-workspace runtime delivery receipt before declaring a release ready."
   ]
 }

@@ -7,6 +7,7 @@
 | Claude Code lifecycle hooks | command delivery | package is inapplicable |
 | Python 3.8+ on the runtime PATH | executes both scripts | no hook payload from the command |
 | `config/continuity.json` | section and cap configuration | error-only payload |
+| `<workspace>/.memory/MEMORY.md` with marker pair | identity-directory target | generator refuses without writing |
 
 ## Optional integration
 
@@ -18,11 +19,15 @@
 ## Runtime reads
 
 - `<PACKAGE_ROOT>/src/selfhook.py`
+- `<PACKAGE_ROOT>/src/identity_directory.py`
 - `<PACKAGE_ROOT>/config/continuity.json`
 - Configured pointer and cap target paths for validation.
+- `<workspace>/.memory/` root, its direct Markdown files/folders, and direct child
+  entries during directory generation.
 
-Package code makes no runtime file writes. Installation creates local configuration,
-lifecycle registrations, and optional checker wiring outside this package.
+`identity_directory.py` writes only the generated marker block inside
+`<workspace>/.memory/MEMORY.md` when called with `--write`; renderer/checker behavior
+is read-only. Installation creates local configuration and lifecycle registrations.
 
 ## Observed runtime constraints
 

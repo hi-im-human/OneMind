@@ -9,6 +9,7 @@ Do not mark an item complete without a reproducible command result or artifact.
 - [ ] Candidate root and tracked file list are recorded.
 - [ ] `config/tool.json` parses and matches package entrypoints.
 - [ ] Python source compiles without syntax errors.
+- [ ] `tests/identity_directory_tests.py` passes from the packaged location.
 - [ ] Example configuration parses and fails only for its intentional `<WORKSPACE>` placeholder.
 - [ ] Package documentation describes only current configuration, runtime behavior, dependencies, installation, verification, and failure boundaries.
 
@@ -24,7 +25,9 @@ Do not mark an item complete without a reproducible command result or artifact.
 ## Lifecycle registration
 
 - [ ] The settings fragment parses as JSON.
-- [ ] SessionStart and PostCompact registrations use absolute package paths and the intended `--event` values.
+- [ ] SessionStart, PostCompact, and PreCompact registrations use absolute package paths and intended arguments.
+- [ ] The PreCompact command uses `identity_directory.py --config … --write --quiet`.
+- [ ] A marker-ready `MEMORY.md` generation preserves its prefix/suffix bytes, omits depth-2 bait, and lists direct child folders by name.
 - [ ] A headless runtime receipt records the expected workspace cwd and a hook response.
 
 ## Uninstall

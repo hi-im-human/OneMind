@@ -1,18 +1,21 @@
 # Selfhook
 
-**Type:** Claude Code SessionStart/PostCompact lifecycle hook and configuration
-validator.
+**Type:** Claude Code SessionStart/PostCompact lifecycle renderer, PreCompact memory
+directory generator, and configuration validator.
 
 **Runtime surface:** `src/selfhook.py` reads `config/continuity.json` and emits one
 banner-separated JSON `additionalContext` payload. `src/check_limits.py` validates
 the same configuration and reports configured character-limit violations.
+`src/identity_directory.py` derives `<workspace>/.memory` from that configuration and
+refreshes its marked `MEMORY.md` block at PreCompact.
 
 **Installer changes:** create `config/continuity.json` from the supplied example,
-register two lifecycle commands in `<WORKSPACE>/.claude/settings.json`, and optionally
-wire the checker into a local commit or sync workflow.
+prepare a marker-ready `.memory/MEMORY.md`, register SessionStart, PostCompact, and
+PreCompact commands in `<WORKSPACE>/.claude/settings.json`, and optionally wire the
+checker into a local commit or sync workflow.
 
-**Runtime writes:** none. Package code reads configuration and configured file paths;
-it does not create, modify, or inject file contents.
+**Runtime writes:** the PreCompact generator replaces only the marked directory block
+inside `<WORKSPACE>/.memory/MEMORY.md`; renderer and checker are read-only.
 
 **Uninstall order:** remove lifecycle registrations, remove checker wiring, then
 remove the package directory. Removing the package first leaves invalid command paths

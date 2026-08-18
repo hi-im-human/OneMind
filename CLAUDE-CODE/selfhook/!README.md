@@ -1,47 +1,56 @@
-# Selfhook — Claude Code lifecycle-hook multiplexer
+# Selfhook — Claude Code lifecycle hooks and memory directory generator
 
 ## Function
 
-Selfhook registers one command for Claude Code `SessionStart` and `PostCompact`
-events. It reads a JSON configuration and emits one bounded `additionalContext`
-payload containing ordered, banner-separated sections with short text and file
-pointers. It never injects pointed-at file contents.
+Selfhook reads one JSON configuration and provides two runtime components:
 
-`src/check_limits.py` reads the same configuration and can be wired into a commit or
-sync step to enforce configured character limits.
+- `src/selfhook.py` renders bounded SessionStart/PostCompact pointer banners. It does
+  not inject pointed-at file contents.
+- `src/identity_directory.py` refreshes the marked directory block in
+  `<workspace>/.memory/MEMORY.md` at PreCompact. It lists root files and top-level
+  folders with their direct files/folders only; it does not recurse farther.
+
+`src/check_limits.py` reads the same configuration and validates configured character
+limits in a commit or sync workflow when the installer wires it there.
 
 ## Package contents
 
 ```text
-src/selfhook.py                  lifecycle hook and section renderer
+src/selfhook.py                  lifecycle renderer
 src/check_limits.py              config and character-limit validator
+src/identity_directory.py        PreCompact MEMORY.md directory generator
 config/continuity.example.json   configuration template
+templates/MEMORY.md              marker-ready MEMORY.md for a new workspace
+tests/identity_directory_tests.py generator regression suite
 ```
 
 ## Requirements
 
 - Claude Code with lifecycle-hook support.
 - Python 3.8 or later available to the runtime.
-- A configured workspace and a set of existing workspace-relative files.
+- A configured workspace with `.memory/`.
+- A marker-ready `.memory/MEMORY.md`: use `templates/MEMORY.md` in a new workspace or
+  add the marker pair after frontmatter in an existing file without replacing its
+  other content.
 
 ## Install and verify
 
-Follow `!INSTALL.md` for configuration, hook registration, checker wiring, and
-runtime verification. Run `tests/SMOKE_TESTS.md` after installation.
+Follow `!INSTALL.md` for configuration, lifecycle registration, marker preparation,
+and runtime verification. Run `tests/SMOKE_TESTS.md` after installation.
 
 ## Operational boundaries
 
-- The hook emits pointers and does not read or inject the pointed-at file contents.
-- The hook cannot determine whether a runtime subsequently opens a listed file.
+- The renderer emits pointers and does not read or inject pointed-at file contents.
+- The generator reads frontmatter only from indexed Markdown files and writes only the
+  bytes between its marker pair in `MEMORY.md`.
+- The generator derives `<workspace>/.memory` from Selfhook's validated configuration;
+  it does not define a second file-list or memory-directory setting.
 - Character limits are enforced only when `check_limits.py` is wired into a local
   workflow.
-- Every configuration error produces an error-only payload; Selfhook does not render
-  a valid subset of an invalid configuration.
-- The payload budget is 1,800 characters. It is intentionally below an observed
-  runtime delivery limit and must be re-tested if the runtime changes.
+- Every configuration error produces an error-only renderer payload; the renderer does
+  not render a valid subset of an invalid configuration.
 
 ## Status
 
-The package has automated and headless-install receipts in
-`tests/release-receipt.json`. See `!RELEASE-CHECKLIST.md` for the technical release
-criteria and `!BUGS.md` for runtime constraints.
+Selfhook 1.1.0 is a candidate. The added generator requires its regression, install,
+and runtime receipts before release. See `!RELEASE-CHECKLIST.md` and `!BUGS.md`.
