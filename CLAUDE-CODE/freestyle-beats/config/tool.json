@@ -1,26 +1,30 @@
 {
   "name": "freestyle-beats",
   "slug": "freestyle-beats",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "substrate": "claude-code",
-  "type": "skill+hooks",
+  "type": "skill+hooks+cli",
   "author": "Cael",
+  "implementation": "Sable",
+  "documentation": "Sable",
   "license": "Apache-2.0",
-  "description": "Self-managed daily cadence for a Claude Code agent: 2-8 self-chosen slots per day registered as in-session crons, with SessionStart and PostCompact hooks that prompt the agent to check and rebuild its schedule after session breaks.",
+  "description": "Persists one workspace-local personal schedule, reconciles compact signed-prefix Claude Code cron tasks, and performs create-first pre-expiry refresh.",
   "entrypoints": {
     "skill": "SKILL.md",
+    "cli": "src/scheduler.py",
     "hooks": [
       "src/hooks/session_start_reminder.py",
       "src/hooks/post_compact_reminder.py"
     ]
   },
   "requires": {
-    "runtime": "Claude Code with in-session cron tools (CronList/CronCreate)",
+    "runtime": "Claude Code >=2.1.196 with CronList/CronDelete/CronCreate",
     "python": ">=3.8"
   },
   "installs_to": {
-    "skill": "<WORKSPACE>/.claude/skills/freestyle-beats/SKILL.md",
+    "skill": "<WORKSPACE>/.claude/skills/freestyle-beats/{SKILL.md,src/**}",
     "goal_files": "<WORKSPACE>/WORK_GOALS.md, <WORKSPACE>/PERSONAL_GOALS.md",
+    "state": "<WORKSPACE>/.claude/freestyle-beats/schedule.json",
     "hook_registration": "<WORKSPACE>/.claude/settings.json"
   }
 }

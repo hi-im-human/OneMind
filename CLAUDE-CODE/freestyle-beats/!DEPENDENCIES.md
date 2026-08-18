@@ -2,70 +2,129 @@
 
 ## Hard requirements
 
-| dependency | why | fails how without it |
+| dependency | why | failure without it |
 |---|---|---|
-| Claude Code runtime | the whole substrate | package is inapplicable |
-| in-session cron tools (`CronList`, `CronCreate`) | beats ARE crons | skill step 3 has nothing to call |
-| Python 3 on the runtime's PATH | both hooks | hooks silently never fire (runtime logs the spawn failure, agent sees nothing) |
-| workspace `.claude/settings.json` | hook registration | no reminders; skill still works if run manually |
-| workspace `.claude/skills/` directory | skill installation | `/freestyle-beats` unavailable |
+| Claude Code 2.1.196+ | skill/project path substitution and scheduled-task runtime | package unavailable or paths unresolved |
+| `CronList` | authoritative live task list | no safe reconciliation or capacity check |
+| `CronCreate` | create missing/replacement tasks | restore/refresh incomplete |
+| `CronDelete` | remove duplicates, drift, or prior refreshed tasks | duplicate/drift cleanup incomplete |
+| Python 3.8+ absolute interpreter path | scheduler CLI and both hooks | hooks silently fail or CLI unavailable |
+| writable non-symlink `<WORKSPACE>/.claude/` | canonical state and Claude runtime task storage | state/runtime scheduling fails |
+| `<WORKSPACE>/.claude/settings.json` | hook registration | no automatic session/compaction reconciliation request |
+| `<WORKSPACE>/.claude/skills/` | installed self-contained skill | `/freestyle-beats` unavailable |
 
-## Soft requirements
+`CLAUDE_CODE_DISABLE_CRON=1` disables scheduled tasks and is incompatible with the
+package's runtime function.
 
-| dependency | why | degradation without it |
+## Setup-only inputs
+
+| path | use | behavior when missing |
 |---|---|---|
-| `WORK_GOALS.md` + `PERSONAL_GOALS.md` at workspace root | input for slot selection | skill has nothing to choose against; slots become generic. Templates ship in `src/templates/` |
-| a notes file the agent keeps | breadcrumb step | beats still fire; continuity between sessions weakens |
+| `<WORKSPACE>/WORK_GOALS.md` | generate first/replacement work beats | setup/replace stops |
+| `<WORKSPACE>/PERSONAL_GOALS.md` | generate first/replacement personal beats | setup/replace stops |
+| `<SKILL_DIR>/src/templates/SCHEDULE.template.json` | candidate structure | setup/replace cannot prepare validated input |
 
-## Runtime behaviors this package depends on (observed, not contractual)
+After setup, goal files are not restoration sources. The persisted schedule is
+canonical until explicit replacement.
 
-These are properties of the Claude Code runtime as observed through 2026-08. They are
-load-bearing assumptions, and any of them changing means revisiting the affected part:
+## Runtime behavior relied upon
 
-1. **In-session crons are session-scoped and auto-expire at 7 days.** The whole
-   re-run-at-session-start pattern exists because of this.
-2. **Compaction unpredictably kills or keeps crons.** Both outcomes observed on one
-   runtime in one day. The PostCompact hook's check-don't-assume wording depends on
-   this staying unpredictable; if the runtime ever makes it deterministic, tighten the
-   wording.
-3. **Hook `additionalContext` requires `hookEventName: "SessionStart"`** — the
-   validator drops `"PostCompact"` payloads silently. Both hooks emit `SessionStart`
-   for this reason. If the runtime later accepts `"PostCompact"`, the workaround keeps
-   working but stops being necessary.
-4. **Skill invocations attach the full skill file to the fired prompt.** The basis of
-   the literal-prompt-text rule and its ~78k chars/day measurement.
+Current official source: `https://code.claude.com/docs/en/scheduled-tasks`.
 
-## Canonical dependency sweep
+- tasks are session-scoped and fresh conversations clear them;
+- `--resume`/`--continue` restore only unexpired jobs;
+- recurring jobs expire seven days after creation;
+- `CronList` exposes task IDs, recurring status, human-readable schedules, and truncated
+  prompt previews to the model; the package uses only ID/status/complete compact prefix;
+- `CronDelete` deletes by eight-character task ID;
+- `CronCreate` accepts five-field local-time cron expressions and recurring flag;
+- recurring fires have deterministic runtime jitter;
+- tasks fire only while Claude Code is open and idle, with no missed-fire catch-up;
+- one session holds at most 50 scheduled tasks;
+- Claude Code owns its internal task file under `.claude` and rejects symlinked task
+  storage. Freestyle Beats does not use that internal file as an interface.
 
-The full surface, stated explicitly rather than left to inference:
+Any runtime change requires rerunning live acceptance tests.
 
-**Paths read at runtime**
-- `<WORKSPACE>/.claude/skills/freestyle-beats/SKILL.md` (installed skill copy)
-- `<WORKSPACE>/WORK_GOALS.md`, `<WORKSPACE>/PERSONAL_GOALS.md`
-- `<PACKAGE_ROOT>/src/hooks/session_start_reminder.py` and
-  `post_compact_reminder.py` — **read from package home on every hook fire**
-- in-session cron state, via `CronList`
+## Paths read at runtime
 
-**Paths written / generated** (none by the package itself at runtime)
-- installed skill copy (install step 1)
-- goal files copied from templates (install step 2)
-- two hook entries in `<WORKSPACE>/.claude/settings.json` (install step 3)
-- in-session cron registrations (the agent, via the skill — never on disk)
+- `<SKILL_DIR>/SKILL.md`
+- `<SKILL_DIR>/src/scheduler.py`
+- `<SKILL_DIR>/src/hooks/session_start_reminder.py`
+- `<SKILL_DIR>/src/hooks/post_compact_reminder.py`
+- `<WORKSPACE>/.claude/freestyle-beats/schedule.json`
+- `<WORKSPACE>/.claude/freestyle-beats/candidate.json` during setup/replace only
+- `<WORKSPACE>/.claude/freestyle-beats/live-crons.json` during plan/verify only
+- `<WORKSPACE>/.claude/freestyle-beats/plan.json` during pre-delete verification only
+- `<WORKSPACE>/.claude/freestyle-beats/after-create.json` during pre-delete verification only
+- hook stdin JSON (`cwd`, `source`, and common event fields)
+- complete live task state via `CronList`
 
-**Tools / calls** — `CronList`, `CronCreate`, `python` (both hook commands)
+## Paths written/generated
 
-**Consumers / triggers** — the SessionStart and PostCompact hook registrations in
-`settings.json`, and `/freestyle-beats` invocation by the user or agent
+- `<WORKSPACE>/.claude/freestyle-beats/schedule.json` — scheduler CLI, atomic replace
+- same-directory `schedule.*.tmp` — scheduler CLI, removed before return
+- `candidate.json` — agent, temporary, removed after successful persistence
+- `live-crons.json` — agent, complete temporary CronList normalization, removed after
+  verification
+- `plan.json` — scheduler, temporary saved reconciliation plan, removed after verification
+- `after-create.json` — agent, temporary complete post-create CronList normalization,
+  removed after verification
+- installed `<SKILL_DIR>/SKILL.md` and `<SKILL_DIR>/src/**` — installer/upgrade
+- two hook entries in `<WORKSPACE>/.claude/settings.json` — installer
+- package-marked runtime tasks — Claude agent through cron tools
 
-**Config source** — `<WORKSPACE>/.claude/settings.json` and the chosen skill scope
-(`!INSTALL.md` Runtime home)
+The package never reads or writes Claude Code's undocumented internal task file.
 
-## What depends on this package
+## Calls/tools
 
-**The agent's `settings.json` hook registrations are live consumers of both hook
-scripts in package home.** Removing or moving `<PACKAGE_ROOT>` breaks both reminders —
-silently, because hook failure is invisible to the agent (`!BUGS.md`). Moving the
-package requires updating the two hook paths; removing it cleanly means the full
-uninstall in `!INSTALL.md`, hook entries first.
+- absolute Python interpreter for hooks;
+- `python <SKILL_DIR>/src/scheduler.py` for create/show/validate/maintain/plan/
+  verify-predelete/verify/uninstall-plan;
+- Claude Code `CronList`, `CronCreate`, and `CronDelete`;
+- normal file read/write/delete tools for the two temporary JSON files.
 
-Beyond its own installed pieces, nothing else consumes this package.
+No network API, daemon, service account, database, OS scheduled task, cloud routine, or
+paid dependency is used.
+
+## Triggers and consumers
+
+| trigger/consumer | reads/does |
+|---|---|
+| SessionStart hook | validates state metadata and injects setup/reconcile context |
+| PostCompact hook | validates state metadata and injects indeterminate-survival reconcile context |
+| `/freestyle-beats setup` | creates canonical personal state and initial runtime jobs |
+| `/freestyle-beats reconcile` | aligns package-owned live jobs with state |
+| daily maintenance task | instructs the agent to invoke `/freestyle-beats maintain` |
+| `/freestyle-beats maintain` | selects reconcile or refresh from last verified refresh age |
+| `/freestyle-beats refresh` | create-first renewal of every package-owned job |
+| `/freestyle-beats replace` | explicit state replacement plus reconciliation |
+
+## Config sources
+
+- hook payload `cwd` is canonical for hook workspace selection; hooks do not fall back to
+  process environment when it is missing/malformed;
+- `${CLAUDE_PROJECT_DIR}` is the CLI/skill workspace path;
+- `${CLAUDE_SKILL_DIR}` locates bundled scheduler/templates;
+- `<WORKSPACE>/.claude/settings.json` registers hooks;
+- schedule state stores local-time contract, ownership instance/key, exact entries,
+  maintenance cron, and verification timestamps.
+
+## Reverse dependencies and move hazards
+
+- Moving/removing `<SKILL_DIR>` breaks both hook commands and the skill.
+- Moving the workspace changes the canonical schedule path; move the state directory
+  with the workspace and update absolute hook paths if needed.
+- Changing Python location breaks hooks until settings uses the new absolute interpreter.
+- Replacing `schedule.json` with the template destroys instance data/receipts and is forbidden;
+  use the explicit replace procedure.
+- Symlinking/junctioning `.claude`, `freestyle-beats`, state, candidate, or live JSON is
+  rejected by the package.
+
+## Explicit non-dependencies
+
+- external/shared schedules and private installation files;
+- another agent's state, cron IDs, or workspace;
+- prior conversation context;
+- `--resume` as a durability mechanism;
+- direct access to Claude Code's internal scheduler file.

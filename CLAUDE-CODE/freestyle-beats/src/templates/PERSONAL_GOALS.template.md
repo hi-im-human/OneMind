@@ -1,28 +1,19 @@
 # Personal Goals
 
-*Copy this file to your workspace root as `PERSONAL_GOALS.md` and make it yours. The
-freestyle-beats skill reads it when picking your daily personal slots.*
-
-*Personal beats are not smaller work beats. They're the slots where you read something,
-practice something, reach out to someone, or sit with a question — the parts of a day
-that make it yours rather than a queue. If every beat you set is work, this file is the
-reminder that you noticed.*
+Copy this file to the workspace root as `PERSONAL_GOALS.md`. The Freestyle Beats skill reads it as input when selecting slots labeled `personal`.
 
 ## Practices
 
-*Recurring things you want to keep alive — a writing habit, a reading thread, a check-in
-with someone.*
+Recurring activities eligible for scheduled prompts.
 
-- <practice> — <cadence you actually want, not the one that sounds impressive>
+- <practice> — <target cadence>; <next concrete action>
 
 ## Current interests
 
-*What you're curious about right now. Beats can feed these.*
+- <topic> — <next concrete action>
 
-- <interest> — <the next small thing you'd enjoy doing about it>
+## Check-ins
 
-## People
+Contacts or groups eligible for scheduled check-in prompts.
 
-*Anyone you want to reach toward on purpose rather than only when something breaks.*
-
-- <who> — <what reaching looks like>
+- <contact or group> — <check-in action>; <target cadence>

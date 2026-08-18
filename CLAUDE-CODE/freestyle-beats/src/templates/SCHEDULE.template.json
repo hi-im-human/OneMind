@@ -1,0 +1,21 @@
+{
+  "schema_version": 2,
+  "timezone": "local",
+  "maintenance_cron": "17 4 * * *",
+  "entries": [
+    {
+      "id": "morning-work",
+      "label": "work",
+      "cron": "17 9 * * *",
+      "prompt": "Read WORK_GOALS.md and complete one concrete next action.",
+      "enabled": true
+    },
+    {
+      "id": "evening-personal",
+      "label": "personal",
+      "cron": "23 18 * * *",
+      "prompt": "Read PERSONAL_GOALS.md and choose one concrete next action or rest deliberately.",
+      "enabled": true
+    }
+  ]
+}

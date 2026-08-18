@@ -1,23 +1,47 @@
 # Freestyle Beats
 
-**What:** Self-managed daily cadence for a Claude Code agent — 2–8 self-chosen,
-self-prompted time slots per day, registered as in-session crons, kept alive by a
-SessionStart and a PostCompact reminder hook.
+**Status:** 1.1.0 release-verified. Required local/live acceptance, independent review,
+sanitization, and link/version gates pass.
 
-**For:** Any Claude Code agent (or human/agent pair) that wants the agent to have a day
-it authors, rather than a queue it drains.
+**Purpose:** Persist and restore one installing workspace's 2–8 personal scheduled
+prompts across fresh conversations, session loss, indeterminate compaction behavior, and
+the runtime's seven-day recurring-task expiry.
 
-**Run:** `/freestyle-beats` in a live session, after installing per `!INSTALL.md`.
+**Runtime:** Claude Code 2.1.196+ · Python 3.8+ · `CronList` · `CronDelete` ·
+`CronCreate`.
 
-**Surface:** one skill file · two stateless Python hooks · two goal-file templates.
-**Package code writes no files at runtime**; the installer/user writes the documented
-copies and two `settings.json` hook entries, and the agent creates in-session crons.
-**Uninstall = remove both hook entries from `settings.json` first, then delete the
-copied files and package home** (full sequence in `!INSTALL.md`).
+**Canonical state:**
 
-**Sharp edges:** malformed `settings.json` kills all hooks silently · cron survival
-across session breaks is unpredictable (the skill checks, never assumes) · never
-register a skill invocation as a beat prompt — measured at ~78k chars/day of duplicate
-context.
+```text
+<WORKSPACE>/.claude/freestyle-beats/schedule.json
+```
 
-**License:** Apache-2.0 (repository root).
+**Entrypoints:**
+
+- `/freestyle-beats setup`
+- `/freestyle-beats reconcile`
+- `/freestyle-beats maintain`
+- `/freestyle-beats refresh`
+- `/freestyle-beats replace`
+- `src/scheduler.py` (`create`, `show`, `validate`, `maintain`, `plan`,
+  `verify-predelete`, `verify`, `uninstall-plan`)
+- SessionStart and PostCompact hook wrappers under `src/hooks/`
+
+**Behavior:** Canonical state is written before runtime tasks. Instance-scoped HMAC
+prefix markers identify package jobs and exact canonical payload digests inside the
+model-visible truncated prompt preview. The planner consumes the complete CronList result,
+creates replacements, requires a post-create re-list before deletes, blocks above the
+50-task peak limit, preserves foreign tasks, and records success only after final exact
+verification. Daily maintenance chooses refresh when the last verified refresh is five
+days old. Uninstall uses a generated HMAC-verified delete plan.
+
+**Not included:** shared/family scheduling, another agent's state, cloud/OS scheduling,
+or direct access to Claude Code's internal task file.
+
+**Live acceptance:** Claude Code 2.1.233 passes schema-2 setup, compact-prefix visibility,
+SessionStart/PostCompact delivery, fresh-conversation restore, idempotence, scheduled
+maintenance self-refresh, literal user firing, partial loss, duplicate/error/cap handling,
+upgrade, and full uninstall.
+
+Install/rollback: `!INSTALL.md` · engineer contract: `!SPECS.md` · tests:
+`tests/SMOKE_TESTS.md` · failures: `!BUGS.md`.

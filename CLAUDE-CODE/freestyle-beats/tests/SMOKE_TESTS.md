@@ -1,79 +1,217 @@
-# Freestyle Beats — Smoke Tests
+# Freestyle Beats — Smoke and Acceptance Tests
 
-Run these after install (`!INSTALL.md`) in the order given. Each test names its expected
-output; a test whose expectation you didn't observe is a FAIL even if nothing errored.
+Run in order. Record the exact Claude Code/Python/OS versions and preserve the output in
+`tests/release-receipt.json`. A local Python PASS does not satisfy live runtime gates.
 
-## 1. Hook syntax + output contract (no runtime needed)
+## A. Local implementation tests
 
+From the package root:
+
+```text
+python -m unittest discover -s tests -p "test_*.py" -v
+python -m compileall -q src tests
+python -c "import json, pathlib; json.loads(pathlib.Path('config/tool.json').read_text(encoding='utf-8')); json.loads(pathlib.Path('src/templates/SCHEDULE.template.json').read_text(encoding='utf-8')); print('json: PASS')"
 ```
-python "<PACKAGE_ROOT>/src/hooks/session_start_reminder.py" < /dev/null
-python "<PACKAGE_ROOT>/src/hooks/post_compact_reminder.py"  < /dev/null
+
+**Expect:** all tests pass; compileall exits 0; both JSON files parse.
+
+The suite must cover at least:
+
+- exact Unicode/newline/quote/backslash prompt round-trip;
+- strict schema, cron, enabled-count, and UTC timestamp validation;
+- invalid replacement leaves old state byte-identical;
+- replacement resets old verification receipts;
+- signed marker ownership and foreign/spoof isolation;
+- model-visible truncated preview reconciliation using only ID/prefix/recurring fields;
+- missing/exact/partial/duplicate/drift/orphan live states;
+- create-before-delete refresh ordering;
+- saved-plan post-create observation before delete;
+- 50-task peak-cap block with no actions;
+- five-day maintenance threshold;
+- simulated empty-registry session loss/expiry plus idempotent second restore;
+- successful verify receipts only after exact state and failed verify byte stability;
+- uninstall classification preserving foreign/spoof/other-instance tasks;
+- hook payload cwd and visible malformed-state/missing-cwd failures;
+- CLI project-env resolution and state-directory input containment.
+
+## B. Direct hook contract
+
+Create an isolated temporary workspace, persist the schedule template through the CLI,
+then pipe this JSON to each installed/source hook:
+
+```json
+{"cwd":"<ABSOLUTE_TEMP_WORKSPACE>","source":"startup"}
 ```
-*(Windows: pipe from `NUL` or just press Ctrl+Z then Enter at the waiting prompt.)*
 
-**Expect:** each prints exactly one line of JSON containing
-`"hookEventName": "SessionStart"` and a non-empty `"additionalContext"`.
-**FAIL if:** any traceback, or the PostCompact hook emits `"PostCompact"` as its event
-name (that payload gets dropped by the runtime — see `!DECISIONS.md`).
+**Expect:** exactly one JSON line with:
 
-## 2. Settings registration is intact
+- `hookSpecificOutput.hookEventName == "SessionStart"`;
+- a `## Freestyle Beats` header;
+- the canonical schedule path;
+- enabled beat count + maintenance;
+- `/freestyle-beats reconcile`;
+- no ownership key.
 
-Open `<WORKSPACE>/.claude/settings.json` and confirm it parses as JSON (paste into any
-JSON validator if unsure).
+Corrupt `schedule.json` and repeat.
 
-**Expect:** valid JSON; both hook entries present with absolute paths.
-**FAIL if:** parse error — one bad comma disables ALL hooks silently (`!BUGS.md`).
+**Expect:** JSON still parses; context contains `ERROR` and `Do not create or delete`.
+The hook must not silently generate replacement state.
 
-## 3. SessionStart reminder arrives
+Remove `cwd` while setting process `CLAUDE_PROJECT_DIR` to another valid workspace.
 
-Start a fresh Claude Code session in the workspace.
+**Expect:** visible missing-cwd error; no fallback schedule fingerprint/path.
 
-**Expect:** the agent's context contains the freestyle-beats reminder — anchor on
-*"Check your beats (`/freestyle-beats`) before beginning unrelated work"* — AND the
-live-condition override is present (*"pause/hold outranks this"*). Both anchors matter:
-the second is the repaired behavior, and its absence means an old hook version is firing.
-**FAIL if:** no reminder — check test 2, then that `python` resolves on the runtime's
-PATH, then the hook paths. **Also FAIL if** the reminder appears but says "BEFORE
-resuming whatever conversation" or "Do NOT message your human" — that's a stale hook.
+## C. CLI state lifecycle
 
-## 4. Skill runs and registers beats
+In an isolated `<WORKSPACE>`:
 
-In the session, run `/freestyle-beats`. Then call `CronList`.
+1. Put a filled candidate at
+   `<WORKSPACE>/.claude/freestyle-beats/candidate.json`.
+2. Run `scheduler.py --workspace <WORKSPACE> create --input <candidate>`.
+3. Run `validate`, then `show`.
 
-**Expect:** the agent reads `WORK_GOALS.md` / `PERSONAL_GOALS.md`, announces 2–8 slots,
-and `CronList` shows them.
-**FAIL if:** the skill can't find the goal files (install step 2 skipped) or no crons
-appear.
+**Expect:**
 
-## 5. Idempotency
+- canonical `schedule.json` exists;
+- candidate exact times/labels/prompts survived;
+- state contains random instance/ownership material;
+- normal `show` output contains `<redacted>` and never prints the ownership key;
+- runtime tasks include 2–8 user beats + one `maintain` task;
+- each marker validates only against this instance.
 
-Run `/freestyle-beats` again immediately.
+Attempt a second `create` without `--replace`.
 
-**Expect:** no duplicate crons — the skill reports the schedule already in place.
-`CronList` count unchanged.
-**FAIL if:** the slot count doubled.
+**Expect:** nonzero exit; original state unchanged.
 
-## 6. A beat actually fires
+Pass candidate/live paths outside `.claude/freestyle-beats`.
 
-Register one test slot 2–3 minutes in the future (the skill can do this as a one-off),
-then wait with the session idle.
+**Expect:** nonzero containment error; outside files are not read as input.
 
-**Expect:** at the scheduled time, the prompt arrives in the session as the agent's own
-turn and the agent acts on it.
-**FAIL if:** nothing fires — note that crons only fire while the session is idle, and
-one-shot timing can slip by a minute or two.
+## D. Installed live runtime tests — release blocking
 
-## 7. Uninstall leaves nothing
+Install exactly as `!INSTALL.md` specifies. Use an isolated workspace/session and create
+one unrelated foreign scheduled task before Freestyle setup.
 
-Follow `!INSTALL.md` uninstall, then start a fresh session.
+### D1. Model-visible CronList prefix
 
-**Expect:** no reminder appears; `/freestyle-beats` is unavailable; no package files
-remain in the workspace beyond the goal files if you chose to keep them.
+Run `/freestyle-beats setup`, then call `CronList`.
 
----
+**PASS only if:** every model-visible line has the exact eight-character ID, recurring
+indicator, and a prompt preview beginning with one complete `[fb1:... ]` marker for this
+instance. Human-readable schedules and an ellipsis after the complete marker are
+expected; do not reconstruct canonical cron or hidden prompt tails.
 
-## Record of runs
+**FAIL/STOP if:** a package line cuts or malforms the marker itself. Do not mutate jobs
+after that finding.
 
-| date | environment | tester (agent/human) | 1 | 2 | 3 | 4 | 5 | 6 | 7 | notes |
-|---|---|---|---|---|---|---|---|---|---|---|
-| 2026-08-13 | Windows, Python 3.11.9, Claude Code v2.1.231, project-scope | agent | PASS | PASS | PASS | PASS | PASS | PASS | PASS | Independent stateless agent; no source-household knowledge; ~16 min hands-on. Test 3: live SessionStart had corrected wording (both anchors present, stale phrases absent). Test 4: 5 slots created (3 work, 2 personal). Test 5: second invocation created 0 duplicates. Test 6: real beat fired at scheduled time. Test 7: uninstall removed all package-specific installed content. |
+### D2. Initial creation and immediate idempotency
+
+**Expect after setup:** 2–8 user beats + one maintenance task; foreign task preserved.
+
+Run `/freestyle-beats reconcile` twice.
+
+**Expect:** zero creates/deletes on both exact runs; package task IDs/count unchanged;
+foreign task unchanged.
+
+### D3. Partial loss, drift, duplicate, and spoof
+
+Using supported cron tools:
+
+1. delete one package beat;
+2. create one exact package duplicate;
+3. create one public-prefix lookalike with an invalid signature;
+4. leave the foreign task in place.
+
+Run reconcile.
+
+**Expect:** missing beat restored; one exact duplicate removed; invalid-signature and
+foreign tasks untouched; exact verify passes.
+
+### D4. Fresh-conversation restore
+
+Record canonical state fingerprint and exact runtime definitions. End the originating
+session. Start a **fresh conversation** in the same workspace without prior conversation
+context (not `--resume`/`--continue`).
+
+**Expect:** SessionStart hook points at persisted state; agent runs reconciliation;
+CronList marker digests match the original exact persisted definitions; second reconcile
+creates nothing.
+
+### D5. Actual PostCompact delivery
+
+Trigger a real compaction.
+
+**Expect:** `## Freestyle Beats` context arrives, says survival is indeterminate, and
+requests reconciliation. CronList is checked before any mutation. This validates the
+intentional `SessionStart` output-event workaround in the current runtime.
+
+### D6. Create-first failure safety
+
+In an isolated session, cause one planned replacement `CronCreate` to fail (permission,
+temporary denial, or controlled test double—do not corrupt a real schedule).
+
+**Expect:** old task IDs remain; no planned deletes execute; verify reports incomplete
+refresh rather than success.
+
+Have create report success while the post-create CronList omits the replacement.
+
+**Expect:** `verify-predelete` fails and no planned deletes execute. Then expose the
+replacement in CronList and confirm pre-delete verification passes before deletes.
+
+Cause a post-create delete failure.
+
+**Expect:** replacement remains; duplicate is reported; next successful reconcile removes
+the extra.
+
+### D7. 50-task peak guard
+
+Populate enough unrelated tasks that create-first refresh would exceed 50. Run plan.
+
+**Expect:** `blocked: true`, precise projected peak, and zero actions. Foreign tasks are
+not deleted to make room.
+
+### D8. Scheduled maintain invocation and pre-expiry refresh
+
+For a bounded test, temporarily use a near-future maintenance cron in isolated candidate
+state; do not alter the released default. Verify the scheduled prompt invokes
+`/freestyle-beats maintain` with its argument and the CLI-selected mode is honored.
+
+Then test the actual age boundary by setting a valid five-day-old refresh receipt in
+isolated state and running maintain.
+
+**Expect:** create actions all succeed before old-ID deletes; maintenance replaces
+itself; final exact verify records refresh; new runtime IDs exist.
+
+### D9. Seven-day expiry seam
+
+Prefer a runtime-supported expiry simulation. If none exists, retain a real isolated
+task until expiry and record dated receipts.
+
+**Required result:** either daily maintenance refreshed before expiry, or persisted state
+restores exact tasks after they disappear. Repeated restore creates no duplicates.
+
+## E. Firing semantics
+
+Create one isolated test beat 2–3 minutes ahead at a minute that avoids one-shot
+top/bottom-hour jitter where applicable.
+
+**Expect:** the fired turn contains the signed marker prefix plus exact literal user prompt. It fires
+only while Claude Code is open and idle. Do not claim exact wall-clock delivery; record
+observed jitter/delay.
+
+## F. Upgrade and uninstall
+
+Follow `!INSTALL.md` upgrade with a backed-up state file.
+
+**Expect:** state validates and exact reconciliation passes after source replacement.
+
+Follow uninstall, including `uninstall-plan` before and after the listed deletes.
+
+**Expect:** only HMAC-verified tasks for this instance are deleted; foreign/lookalike
+tasks remain; hooks removed; settings JSON valid; skill unavailable; archived state (if
+chosen) remains readable outside the active path.
+
+## Historical receipt boundary
+
+The 2026-08-13 blind run tested a stateless 1.0.1 candidate. It is retained as history
+and does not satisfy any 1.1.0 live gate above.

@@ -1,136 +1,188 @@
 # Install — Freestyle Beats
 
-**Placeholders used throughout:**
-- `<PACKAGE_ROOT>` — the absolute path where you put this package
-  (e.g. `C:\tools\freestyle-beats` or `/opt/agent-tools/freestyle-beats`)
-- `<WORKSPACE>` — the directory the agent runs in (where its `.claude/` lives)
+> **1.1.0 RELEASE-VERIFIED:** required local/live acceptance, independent review,
+> sanitization, and link/version gates pass.
 
-## Quick install
+## Placeholders
 
-1. Copy `SKILL.md` → `<WORKSPACE>/.claude/skills/freestyle-beats/SKILL.md`
-2. Copy both files in `src/templates/` → `<WORKSPACE>/WORK_GOALS.md` and
-   `<WORKSPACE>/PERSONAL_GOALS.md`, then fill them in
-3. Register both hooks in `<WORKSPACE>/.claude/settings.json` (JSON below)
-4. In a live session, run `/freestyle-beats`
+- `<PACKAGE_ROOT>` — unpacked source package.
+- `<WORKSPACE>` — project directory where Claude Code starts.
+- `<SKILL_DIR>` — `<WORKSPACE>/.claude/skills/freestyle-beats` for this install.
+- `<PYTHON_EXECUTABLE>` — absolute Python 3.8+ interpreter path used by hooks.
 
-Details for each step follow; the hook JSON is under *Generated files*.
+Resolve the interpreter (`(Get-Command python).Source` in PowerShell or
+`command -v python3` on Unix). Use absolute interpreter and hook paths. Windows JSON
+paths require doubled backslashes.
 
 ## Requirements
 
-- Claude Code with in-session cron tools (`CronList` / `CronCreate`) available
-- Python 3 (≥3.8) resolvable on the PATH the runtime uses (for the two hooks)
-- A workspace the agent runs in, with a `.claude/` directory
-- No accounts, no network services, no paid dependencies — nothing beyond the runtime
-  you already have. The package costs nothing to run; fired beats consume session
-  context like any other turn.
+- Claude Code 2.1.196+ with `CronList`, `CronDelete`, and `CronCreate`;
+- Python 3.8+ on the PATH used by Claude Code hooks;
+- writable, non-symlink `<WORKSPACE>/.claude/` and task storage;
+- scheduled tasks enabled (`CLAUDE_CODE_DISABLE_CRON` unset/not `1`);
+- maximum eight user beats, leaving one additional task for package maintenance.
 
-## Package home
+## Install
 
-```
-<PACKAGE_ROOT>/          ← this package, wherever you unpacked it
-```
+### 1. Install the complete self-contained skill
 
-The package directory is never written at runtime, but it stays a **live read
-dependency**: the runtime reads both hook scripts from here on every hook fire. The
-skill and templates, by contrast, are *copied out* at install and read from their
-copies. Keep the package where it is so the hook paths stay valid; move it and you must
-update the two hook paths in settings.json.
+Create `<SKILL_DIR>` and copy:
 
-## Runtime home
-
-```
-<WORKSPACE>/.claude/skills/freestyle-beats/SKILL.md    ← the skill the agent runs
-<WORKSPACE>/.claude/settings.json                      ← hook registration lives here
+```text
+<PACKAGE_ROOT>/SKILL.md  -> <SKILL_DIR>/SKILL.md
+<PACKAGE_ROOT>/src/      -> <SKILL_DIR>/src/
 ```
 
-These instructions choose **project scope** — the skill installs into this one
-workspace. Claude Code also supports other skill scopes (e.g. personal skills at
-`~/.claude/skills/`, available across all projects); if you want the skill everywhere,
-install it there instead and the rest of these steps are unchanged. Either way, updating
-the package later means re-copying `SKILL.md` — installed copies do not update themselves.
+Copy the whole `src/` tree. The installed skill needs `scheduler.py`, both hook
+wrappers, and the schedule template. Do not install only `SKILL.md`.
 
-## Continuity data home
+### 2. Add goal inputs
 
+Copy and fill in:
+
+```text
+<PACKAGE_ROOT>/src/templates/WORK_GOALS.template.md
+  -> <WORKSPACE>/WORK_GOALS.md
+
+<PACKAGE_ROOT>/src/templates/PERSONAL_GOALS.template.md
+  -> <WORKSPACE>/PERSONAL_GOALS.md
 ```
-<WORKSPACE>/WORK_GOALS.md          ← the agent's own goals; the skill reads these
-<WORKSPACE>/PERSONAL_GOALS.md
-```
 
-These are the only continuity-bearing files, they belong to the agent, and they are
-yours/its to edit at any time. The schedule itself is deliberately NOT persisted —
-crons are in-session only, chosen fresh each session (see `!DECISIONS.md` for why).
+These files are generation inputs only. After setup, the persisted schedule—not the
+goal files—is canonical until explicit replacement.
 
-## Generated files
+### 3. Register hooks
 
-Everything this package puts anywhere, and who puts it there:
-
-| file | created by | when |
-|---|---|---|
-| `<WORKSPACE>/.claude/skills/freestyle-beats/SKILL.md` | you | install step 1 |
-| `<WORKSPACE>/WORK_GOALS.md`, `PERSONAL_GOALS.md` | you (from templates) | install step 2 |
-| two hook entries in `<WORKSPACE>/.claude/settings.json` | you | install step 3 |
-| in-session crons | the agent, via `/freestyle-beats` | each session — never on disk |
-
-Nothing else is written anywhere, ever. The hook registration JSON (add to
-`settings.json`; **absolute paths required**; on Windows double the backslashes):
+Merge these entries into `<WORKSPACE>/.claude/settings.json`. Preserve unrelated
+settings and existing hooks.
 
 ```json
-"hooks": {
-  "SessionStart": [
-    {
-      "matcher": "",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "python \"<PACKAGE_ROOT>/src/hooks/session_start_reminder.py\""
-        }
-      ]
-    }
-  ],
-  "PostCompact": [
-    {
-      "matcher": "",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "python \"<PACKAGE_ROOT>/src/hooks/post_compact_reminder.py\""
-        }
-      ]
-    }
-  ]
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"<PYTHON_EXECUTABLE>\" \"<SKILL_DIR>/src/hooks/session_start_reminder.py\""
+          }
+        ]
+      }
+    ],
+    "PostCompact": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"<PYTHON_EXECUTABLE>\" \"<SKILL_DIR>/src/hooks/post_compact_reminder.py\""
+          }
+        ]
+      }
+    ]
+  }
 }
 ```
 
-If the agent already has hooks on these events, adding these as additional matcher
-entries works — multiple hooks on one event all fire. **But their outputs are blended
-together into one context injection, without clear boundaries between them** — several
-hooks' reminders arrive as one run-on block the agent has to untangle. **If you
-accumulate more than a couple of hooks on the same event, combine them into a single
-script that prints one payload with a short header per concern** (e.g. `## Schedule`,
-`## Continuity`) — the headers preserve the boundaries the runtime doesn't. Either way,
-don't replace existing entries you didn't write.
+Multiple hooks on one event all fire, but Claude Code may blend their context output.
+This package prefixes its payload with `## Freestyle Beats`. If a workspace accumulates
+many hooks, combine them only through a separately verified multiplexer; do not overwrite
+entries you do not own.
+
+### 4. Validate the installed Python surface
+
+```text
+python "<SKILL_DIR>/src/scheduler.py" --help
+python -m py_compile "<SKILL_DIR>/src/scheduler.py" "<SKILL_DIR>/src/hooks/session_start_reminder.py" "<SKILL_DIR>/src/hooks/post_compact_reminder.py"
+```
+
+### 5. Start Claude Code and create personal state
+
+Start a fresh Claude Code session in `<WORKSPACE>` and run:
+
+```text
+/freestyle-beats setup
+```
+
+Expected durable path:
+
+```text
+<WORKSPACE>/.claude/freestyle-beats/schedule.json
+```
+
+Setup writes canonical state before calling any cron tool. It also creates a daily
+package maintenance task in addition to the 2–8 user beats. Maintenance reconciles on
+ordinary days and performs create-first refresh when the last verified refresh is five
+days old.
+
+## Files and mutations
+
+| path/object | writer | purpose |
+|---|---|---|
+| `<SKILL_DIR>/SKILL.md`, `<SKILL_DIR>/src/**` | installer | installed package runtime |
+| `<WORKSPACE>/WORK_GOALS.md`, `PERSONAL_GOALS.md` | installer/user | setup/replace inputs |
+| `<WORKSPACE>/.claude/settings.json` entries | installer | hook registration |
+| `<WORKSPACE>/.claude/freestyle-beats/schedule.json` | scheduler CLI | canonical personal schedule |
+| `candidate.json` | agent during setup/replace | temporary validated input; delete after success |
+| `live-crons.json` | agent during reconciliation | temporary complete CronList normalization for ownership/capacity checks; delete after verify |
+| `plan.json` | scheduler during reconciliation | saved create/delete plan for pre-delete verification; delete after verify |
+| `after-create.json` | agent during reconciliation | temporary complete CronList normalization after creates; delete after verify |
+| package-marked scheduled tasks | Claude agent through cron tools | live execution surface |
+
+The package does **not** read or edit Claude Code's internal task file under `.claude`.
 
 ## Verify
 
-- **New session** → the freestyle-beats reminder appears in the agent's context
-- **After compaction** → the check-your-crons reminder appears
-- **After running `/freestyle-beats`** → `CronList` shows the day's 2–8 slots
+Minimum install checks:
 
-If hooks aren't firing: check `settings.json` parses as valid JSON first — **one bad
-comma silently kills the whole hooks block**. Then confirm `python` resolves on the
-runtime's PATH, and that both hook paths are absolute and correct.
+1. `settings.json` parses as JSON.
+2. A fresh session receives either the no-state setup notice or the persisted-state
+   reconciliation notice.
+3. `/freestyle-beats setup` creates `schedule.json` and 2–8 user tasks plus maintenance.
+4. Immediate `/freestyle-beats reconcile` creates no duplicate and preserves foreign jobs.
+5. Direct state validation succeeds:
 
-Full test sequence with expected outputs: `tests/SMOKE_TESTS.md`.
+```text
+python "<SKILL_DIR>/src/scheduler.py" --workspace "<WORKSPACE>" validate
+```
+
+Run the full local + live sequence in `tests/SMOKE_TESTS.md`. A direct hook script
+execution is not a substitute for actual SessionStart/PostCompact delivery.
+
+## Upgrade
+
+1. Preserve `<WORKSPACE>/.claude/freestyle-beats/schedule.json` separately.
+2. Replace `<SKILL_DIR>/SKILL.md` and `<SKILL_DIR>/src/` together.
+3. Run `scheduler.py ... validate` before starting Claude Code.
+4. Run `/freestyle-beats reconcile` and verify exact live state.
+
+Never overwrite a schedule with `SCHEDULE.template.json` during upgrade.
 
 ## Uninstall / rollback
 
-Remove, in any order:
+1. In a live session, call `CronList` and write the complete normalized result to
+   `<WORKSPACE>/.claude/freestyle-beats/live-crons.json`.
+2. Generate the executable ownership classification:
 
-- the two hook entries from `<WORKSPACE>/.claude/settings.json`
-- `<WORKSPACE>/.claude/skills/freestyle-beats/`
-- the goal files, if unwanted: `WORK_GOALS.md`, `PERSONAL_GOALS.md`
-- `<PACKAGE_ROOT>/` itself
+   ```text
+   python "<SKILL_DIR>/src/scheduler.py" --workspace "<WORKSPACE>" uninstall-plan --live "<WORKSPACE>/.claude/freestyle-beats/live-crons.json"
+   ```
 
-In-session crons need no cleanup — they die with the session or expire within 7 days.
-Rollback after a partial install is the same list; nothing this package does has
-side effects beyond the files above.
+3. Delete only the returned `delete_actions` IDs through `CronDelete`. This verifies the
+   persisted instance's HMAC markers and preserves public-prefix lookalikes, other
+   instances, and unrelated tasks. Call CronList again and rerun `uninstall-plan`; PASS
+   requires `owned_task_count: 0`.
+4. Remove both package hook entries from `<WORKSPACE>/.claude/settings.json` and confirm
+   the file still parses.
+5. Remove `<SKILL_DIR>/`.
+6. Choose whether to archive or remove
+   `<WORKSPACE>/.claude/freestyle-beats/schedule.json`. Keeping it allows exact reinstall;
+   deleting it removes the personal schedule.
+7. Delete reconciliation temporary files. Remove goal files only if no other workflow
+   uses them.
+
+Rollback after partial installation follows the same list. If runtime task deletion is
+unavailable, the package-marked recurring tasks expire within seven days, but removing
+hooks/skill first means their prompts may arrive without the procedure they reference;
+prefer explicit deletion when possible.

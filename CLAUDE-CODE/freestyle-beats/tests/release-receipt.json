@@ -1,71 +1,115 @@
 {
-  "schema_version": 1,
-  "install": {
-    "fresh_home_passed": true,
-    "human_reader_passed": false,
-    "agent_reader_passed": true,
-    "costs_disclosed": true,
-    "hands_on_minutes": 16,
-    "evidence": "An independent stateless agent installed the package from a fresh isolated test root on Windows, Python 3.11.9, Claude Code v2.1.231, project-scope install. No source-household knowledge was needed; all information came from !README.md, !INSTALL.md, and tests/SMOKE_TESTS.md. The agent identified every destination, verified the live surface, and removed the package cleanly. Human walkthrough not yet performed."
+  "schema_version": 2,
+  "candidate": {
+    "name": "freestyle-beats",
+    "version": "1.1.0-rc.2",
+    "date": "2026-08-17",
+    "status": "passed_and_promoted",
+    "reason": "The 1.1.0-rc.2 implementation passed all required local/live acceptance and independent review gates and was promoted to 1.1.0."
   },
-  "paths": {
-    "package_home": "<PACKAGE_ROOT>",
-    "runtime_home": "<WORKSPACE>/.claude/skills/freestyle-beats",
-    "continuity_data_home": "<WORKSPACE> (WORK_GOALS.md, PERSONAL_GOALS.md — agent-owned)",
-    "generated_files": [
-      "<WORKSPACE>/.claude/skills/freestyle-beats/SKILL.md",
-      "<WORKSPACE>/WORK_GOALS.md",
-      "<WORKSPACE>/PERSONAL_GOALS.md",
-      "two hook entries in <WORKSPACE>/.claude/settings.json",
-      "in-session crons (never on disk; session-scoped)"
-    ]
+  "release": {
+    "version": "1.1.0",
+    "date": "2026-08-17",
+    "status": "release_verified"
   },
-  "smoke_tests": {
+  "local_validation": {
     "passed": true,
-    "command": "Follow tests/SMOKE_TESTS.md in order from a fresh install; tests 1-7 with expected outputs named per test",
-    "evidence": "All 7 smoke tests passed on Windows, Python 3.11.9, Claude Code v2.1.231, project-scope install. Test 1: both hooks output valid JSON with hookEventName SessionStart and non-empty additionalContext. Test 2: settings.json parsed as valid JSON, both hook entries present with absolute paths. Test 3: live SessionStart reminder contained both required anchors and excluded stale phrases. Test 4: skill created 5 slots (3 work, 2 personal) within 2-8 range. Test 5: second invocation created 0 duplicates, count remained 5. Test 6: a real beat fired at the scheduled time. Test 7: uninstall removed all package-specific installed content; fresh session showed no reminder, no skill, no slash command."
+    "tests_passed": 29,
+    "tests_skipped": 1,
+    "command": "python -B -m unittest discover -s CLAUDE-CODE/freestyle-beats/tests -p test_*.py -v",
+    "evidence": "30 tests ran in 0.185s: 29 PASS, 1 SKIP. The skipped Windows symlink-creation test requires a privilege unavailable to the test process; all non-privileged containment/reparse tests pass.",
+    "execution": "scheduler and hooks imported/executed throughout the passing suite",
+    "json": "every package JSON artifact parsed with utf-8-sig: PASS"
   },
-  "factual_runtime_claims": [
+  "implemented": [
+    "workspace-local canonical schedule state",
+    "strict schema, cron, prompt, enabled-count, and UTC timestamp validation",
+    "atomic same-directory state replacement with reparse-component checks",
+    "random instance identifier and HMAC ownership markers",
+    "ownership-key redaction from routine show output",
+    "complete-CronList reconciliation planning",
+    "foreign/spoof/other-instance preservation",
+    "missing, duplicate, drift, and orphan repair",
+    "create-first replacement with saved-plan post-create verification and 50-task peak guard",
+    "exact post-action verification and receipts",
+    "daily maintain entrypoint with five-day refresh threshold",
+    "HMAC-verified uninstall planning",
+    "fail-closed SessionStart/PostCompact workspace and state notices",
+    "self-contained skill plus scheduler/hooks/templates installation"
+  ],
+  "not_verified": [
+    "privileged Windows symlink/junction rejection test"
+  ],
+  "paths": {
+    "source_package": "<PACKAGE_ROOT>",
+    "installed_skill": "<WORKSPACE>/.claude/skills/freestyle-beats/{SKILL.md,src/**}",
+    "canonical_state": "<WORKSPACE>/.claude/freestyle-beats/schedule.json",
+    "temporary_candidate": "<WORKSPACE>/.claude/freestyle-beats/candidate.json",
+    "temporary_live_list": "<WORKSPACE>/.claude/freestyle-beats/live-crons.json",
+    "hook_registration": "<WORKSPACE>/.claude/settings.json"
+  },
+  "runtime_sources": [
     {
-      "claim": "Registering a skill invocation as a recurring beat prompt attaches the entire skill file per fire; measured on this package's ancestor at ~11,200 chars/fire, ~78k chars/day at 7 daily fires.",
-      "surface": "SKILL.md; !SPECS.md; !DECISIONS.md; !BUGS.md",
-      "evidence": "Measurement performed 2026-08-01 on the ancestor installation and carried with its date. Presented as a dated measurement of the ancestor, not as a claim re-verified on this candidate.",
-      "status": "passed"
+      "url": "https://code.claude.com/docs/en/scheduled-tasks",
+      "used_for": "CronCreate/CronList/CronDelete, session scope, fresh/resume behavior, seven-day expiry, local time, jitter, 50-task cap, open/idle behavior, and internal task-storage boundary",
+      "opened": "2026-08-17"
     },
     {
-      "claim": "In-session crons are session-scoped and auto-expire after 7 days.",
-      "surface": "SKILL.md; !SPECS.md; !DEPENDENCIES.md",
-      "evidence": "Runtime-documented behavior, observed consistently in the ancestor installation through 2026-08. Marked in !DEPENDENCIES.md as observed-not-contractual.",
-      "status": "passed"
+      "url": "https://code.claude.com/docs/en/hooks",
+      "used_for": "hook cwd and SessionStart source contract",
+      "opened": "2026-08-17"
     },
     {
-      "claim": "Compaction unpredictably kills or keeps in-session crons; both outcomes observed on one runtime in one day.",
-      "surface": "SKILL.md; src/hooks/post_compact_reminder.py; !BUGS.md; !DEPENDENCIES.md",
-      "evidence": "Observed 2026-08-06 (survival), 2026-08-10 (survival then later-break loss, same night), 2026-08-13 (16/16 survival). The package deliberately asserts unpredictability, not either outcome.",
-      "status": "passed"
-    },
-    {
-      "claim": "The runtime's hook validator silently drops additionalContext payloads whose hookEventName is 'PostCompact'; emitting 'SessionStart' from a PostCompact registration validates and delivers.",
-      "surface": "src/hooks/post_compact_reminder.py; !SPECS.md; !DECISIONS.md",
-      "evidence": "Discovered 2026-05-31 in ancestry; workaround in continuous daily use since. Marked as as-of-last-verification in both the hook comment and !SPECS.md. Independent run confirmed the PostCompact hook emits SessionStart (Test 1) and the live SessionStart reminder arrived correctly (Test 3).",
-      "status": "passed"
-    },
-    {
-      "claim": "Package code performs no runtime file writes. The installer/user creates the documented copies and settings entries; the skill reads the goal files and cron state and creates in-session crons; the hooks read stdin and their own package-home scripts and print JSON. The package-home hook scripts are live read dependencies at every hook fire.",
-      "surface": "!INSTALL.md; TOOL.md; !DEPENDENCIES.md; src/hooks/",
-      "evidence": "Independent blind run confirmed: both hooks are stateless print-only scripts (Test 1); the skill's only mutations are cron registrations via CronCreate (Test 4); uninstall removed all package-specific installed content leaving only the structural settings.json skeleton (Test 7). Scope of independent verification: install, live session, and uninstall behavior on this candidate.",
-      "status": "passed"
+      "url": "https://code.claude.com/docs/en/skills",
+      "used_for": "CLAUDE_SKILL_DIR and CLAUDE_PROJECT_DIR substitution plus scheduled skill behavior",
+      "opened": "2026-08-17"
     }
   ],
+  "historical_evidence": [
+    {
+      "claim": "The 2026-08-13 blind run passed the then-current install/session/uninstall suite.",
+      "scope": "Stateless 1.0.1 candidate only; not evidence for 1.1.0 durability."
+    },
+    {
+      "claim": "PostCompact additionalContext previously delivered only with SessionStart as the output event name.",
+      "scope": "Observed 2026-05-31 and present in the 2026-08-13 ancestry; revalidated with real /compact on Claude Code 2.1.233."
+    },
+    {
+      "claim": "An ancestor scheduled skill invocation attached about 11,200 characters per fire, about 78,000 per day at seven daily fires.",
+      "scope": "Measured ancestor cost; user beats remain literal and one maintenance skill invocation is disclosed."
+    }
+  ],
+  "review": {
+    "first_implementation_review": "FAIL: public markers, day-of-month refresh gap, delete-first replacement, hook fallback, path/timestamp/input/cron-step gaps, and coverage defects.",
+    "first_review_fixes": "Applied and locally retested; see changelog.",
+    "second_implementation_review": "FAIL: add post-create observation before deletes, executable uninstall classification, complete-list README correction, failed-receipt immutability coverage, daily-maintenance wording correction, and cache cleanup.",
+    "second_review_fixes": "Applied and locally retested; the then-current result was 26 PASS, 1 SKIP.",
+    "pre_live_frozen_diff_review": "PASS (pre-live review): no pycache/pyc artifacts and no then-visible defect. Superseded by the later live runtime finding and schema-2 implementation.",
+    "final_frozen_diff_review": "PASS: independent code/security review found no substantive defect; final documentation recheck found no blocker beyond the completed release-status transition."
+  },
+  "live_runtime_evidence": {
+    "runtime": "Claude Code 2.1.233, claude-opus-5, isolated temporary workspace",
+    "date": "2026-08-17",
+    "schema_1_finding": "Setup created 5/5 tasks but verification failed closed because model-visible CronList used human-readable schedules and truncated away end markers.",
+    "schema_2_setup": "PASS: 5 creates, 0 deletes, 5/5 exact verify; every 61-character marker fully visible; immediate second reconcile returned 0 creates, 0 deletes, 5 keeps; fingerprint d187ab9a7e9a.",
+    "schema_2_fresh_conversation": "PASS: SessionStart hook delivered; first CronList had 0 surviving jobs; persisted state restored 5/5 exact; verify-predelete/final verify passed; immediate second reconcile returned no actions; fingerprint unchanged.",
+    "schema_2_deletion_and_uninstall": "PASS: exact duplicate produced one planned/real CronDelete; invalid-signature lookalike remained foreign; 5/5 owned uninstall IDs deleted; second uninstall-plan returned owned 0, foreign 1.",
+    "schema_2_scheduled_maintenance": "PASS: idle minute-cadence maintenance fired, invoked /freestyle-beats maintain, selected refresh with no prior receipt, created all 3 replacements first, passed exact-count=2 pre-delete verification, deleted old IDs including itself, verified 3/3, and recorded last_refreshed_at. The next scheduled fire selected reconcile and made zero mutations.",
+    "schema_2_postcompact": "PASS: real /compact delivered the PostCompact command's SessionStart-named additionalContext workaround; follow-up persisted-state reconcile returned 5 keeps, 0 creates, 0 deletes, and retained every ID.",
+    "schema_2_literal_fire_and_partial_loss": "PASS: in an installed workspace whose path contained spaces, a literal every-minute user beat appended one exact line per idle fire; deleting only one canonical user task led reconcile to create exactly that task, retain the other two IDs, issue no extra delete, and verify 3/3.",
+    "schema_2_delete_failure": "PASS: a saved duplicate-delete plan raced with prior removal of its target; the planned CronDelete returned the real error `No scheduled job with id ...`; final exact state was 5/5 and the next reconcile returned zero actions.",
+    "schema_2_create_failure_and_cap": "PASS: a stale refresh create attempted after 45 foreign jobs filled the real 50-task cap returned `Too many scheduled jobs (max 50). Cancel one first.`; no deletes ran and original 5/5 remained. A fresh refresh plan blocked at projected peak 55 with every action array empty and foreign count 45.",
+    "schema_2_upgrade_and_full_uninstall": "PASS: in-place package overwrite preserved schedule bytes with matching SHA-256; restored 3/3; HMAC uninstall removed only 3 owned live tasks and preserved one foreign task; exact hook entries were pruned while unrelated permissions remained; installed skill and state directories were absent afterward.",
+    "model_visible_contract": "Normalize exact IDs, recurring indicators, and verbatim prompt previews only. Canonical schedules and hidden prompt tails were not reconstructed."
+  },
   "license": {
     "spdx": "Apache-2.0",
     "dependencies_reviewed": true,
-    "evidence": "LICENSE (canonical Apache-2.0 text), config/tool.json, and this receipt agree. No vendored dependencies; requires only the runtime and Python >=3.8, per !DEPENDENCIES.md."
+    "evidence": "No vendored dependency; standard-library Python plus Claude Code runtime tools."
   },
-  "independent_review": {
-    "validator_rerun": true,
-    "onboarding_followed": true,
-    "evidence": "An independent stateless agent followed the onboarding path (!README.md, !INSTALL.md, tests/SMOKE_TESTS.md) without source-household knowledge, completed the blind install/test/uninstall phase, and recorded evidence. The pre-evidence gate run (with --no-receipt) confirmed the frozen digest e176bd4b3ec90caa07eda89a5259893a871955c02569308fb1164d1982ca17e6 and failed only on intentionally pending evidence fields (release-checklist unchecked items, release-receipt pending fields). After evidence was recorded, the final gate run passed."
+  "sanitization": {
+    "status": "passed",
+    "evidence": "Post-schema-2 scans found no credential, private local path/account/session identifier, generated cache, broken link, or nontechnical household prose leak. Name matches are public package authorship metadata; token matches are schema/code terminology."
   },
-  "release_status": "export-ready"
+  "release_status": "release_verified"
 }
