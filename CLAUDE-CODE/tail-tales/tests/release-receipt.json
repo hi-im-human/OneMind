@@ -1,10 +1,10 @@
 {
   "schema_version": 2,
   "package": "tail-tales",
-  "release_status": "requires revalidation after documentation rewrite",
+  "release_status": "synthetic revalidation passed after public-surface sanitization",
   "synthetic_suite": {
     "command": "python tests/smoke_test.py",
-    "recorded_date": "2026-08-15",
+    "recorded_date": "2026-08-18",
     "platform": "Windows 11",
     "python": "3.13",
     "assertions": 40,
@@ -28,8 +28,14 @@
     "configured tail file after successful extraction",
     "cwd error log for eligible failures"
   ],
-  "revalidation_required": [
-    "Run the synthetic suite after source changes.",
-    "Record a target-runtime PostCompact receipt before declaring release ready."
-  ]
+  "revalidation_scope": {
+    "source_behavior_changed": false,
+    "completed": [
+      "Synthetic suite passed after source-comment and documentation sanitization.",
+      "Markdown, JSON, and Python source passed the current language gate."
+    ],
+    "not_repeated": [
+      "Target-runtime PostCompact callback; source behavior was unchanged by this sanitization revision."
+    ]
+  }
 }

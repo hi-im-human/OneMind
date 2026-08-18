@@ -1,15 +1,8 @@
 #!/usr/bin/env python
-"""
-check_limits.py — continuity-file cap enforcement at commit time.
+"""Enforce configured continuity-file caps before commit or synchronization.
 
-The design premise (2026-07-31, this package's ancestor): size limits belong
-in the OWNER'S WORKFLOW, not in the hook transport. The transport silently
-truncates oversized output and reports success; a pre-commit/pre-sync check
-fails LOUD, in front of the person who can fix it, before the oversized file
-becomes the only copy anyone syncs.
-
-Reads the same config as selfhook.py ('caps' list) — one source of truth,
-both consumers, no parsing of code by code.
+Reads the same ``caps`` configuration as ``selfhook.py`` and exits nonzero for
+oversized files or invalid configuration.
 
 Usage (call from a pre-commit hook or sync script, before committing):
     python check_limits.py --config "<PACKAGE_ROOT>/config/continuity.json" [--workspace <path>]
@@ -41,11 +34,7 @@ def main():
         sys.exit(1)
     workspace = Path(args.workspace or cfg.get("workspace") or Path.cwd())
 
-    # The FULL shared contract (selfhook.validate): root keys, workspace,
-    # sections, and caps. The checker must reject exactly what the hook
-    # rejects — a config the hook refuses to render must not pass commit,
-    # and a cap that silently stops applying is worse than no cap, because
-    # everyone still believes in it.
+    # Validate the same root keys, workspace, sections, and caps as the hook.
     errors = validate(cfg, workspace)
     if errors:
         print("")

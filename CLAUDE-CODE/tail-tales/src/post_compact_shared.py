@@ -1,30 +1,8 @@
-"""
-Tail Tales — shared PostCompact hook, one copy for every Claude Code agent.
+"""Extract a bounded post-compaction session tail from the runtime payload.
 
-Replaces a set of near-identical per-agent scripts (post_compact_<agent>.py, one
-per agent, each with its own hardcoded paths). All per-agent config is now
-derived from the PostCompact stdin payload Claude Code already hands the hook at
-fire time:
-
-    transcript_path → which jsonl just compacted (canonical)
-    cwd             → which agent's workspace (canonical)
-
-Hardcoded PROJECTS_DIR / OUTPUT constants are gone. When an agent's workspace
-moves, this script keeps working with zero edits — because the runtime told it
-where to look, not a constant somebody had to remember to update.
-
-Agent display name (for "Ada (thinking):" / "Bly:" labels) comes from the
-cwd basename with leading non-letter chars stripped (e.g. `⚙️Ada` → `Ada`).
-An `--agent` argv flag overrides if the auto-derivation ever needs to.
-
-2026-07-31: Injection removed (owner ruling). Tail Tales now ONLY writes the session
-tail file to disk. Selfhook replacement tells agents to read their files
-(including SESSION_TALE.md) on compaction — no injection needed here.
-
-Origin: 2026-06-10, after one agent's per-agent script silently captured a
-week-stale tail because PROJECTS_DIR still pointed at the old workspace path.
-Doctrine: runtime-payload-as-source-of-truth beats hardcoded constants for any
-per-agent script. (Adopted house-wide after the incident above.)
+The hook reads ``transcript_path`` and ``cwd`` from PostCompact stdin, writes one
+tail file to the supplied workspace, and does not inject tail content into context.
+The display label derives from the workspace basename unless ``--agent`` overrides it.
 """
 
 import argparse
@@ -46,99 +24,22 @@ TAG_OPEN_RE = re.compile(r"^</?[A-Za-z][\w:.-]*(\s|/?>)")
 
 RESUME_BANNER = "This session is being continued from a previous conversation"
 
-# Timestamps render in the RUNTIME MACHINE'S OWN LOCAL TIME.
-#
-# This was previously a hardcoded IANA zone. Two problems, both real for anyone
-# installing this outside the household it was written in: it stamped every
-# tale with a timezone the reader does not live in, and on Windows `zoneinfo`
-# needs the external `tzdata` package to resolve an IANA name at all — an
-# undeclared dependency that happened to be installed on the build machine, so
-# nothing ever failed here. `.astimezone()` with no argument asks the platform,
-# needs no timezone database, and is right by default wherever it runs.
-TAIL_TURNS = 40       # conversational turns (owner/agent)
+# Timestamps render in the runtime machine's local timezone without requiring a
+# named timezone database.
+TAIL_TURNS = 40       # conversational turns (user/agent)
 
-# HARD_CAP — THE LIVE CONTRACT, enforced in build_tale() on the write path.
-# There is ONE file, the agent reads it directly, and nothing injects a copy of
-# it, so the write path is the only place a limit can live. Over the cap, the
-# OLDEST turns are dropped: the material nearest the compaction seam is what a
-# returning agent needs, so it is the last to go. Owner rulings, 2026-08-15:
-#   "The enforcement comes from the write-path."
-#   "truncation is from the *top* of the file, not the bottom."
-#   "No git enforcement on Tail Tales."
+# The writer enforces the cap. When trimming is required, it removes oldest turns
+# so content nearest the compaction boundary remains available.
 HARD_CAP = 30000
 
-# --- HISTORY, 2026-07-29. ⚠️ REVERSED IN PART — DOES NOT DESCRIBE CURRENT ------
-# ⚠️ Item 4 below is OBSOLETE. This hook no longer injects anything; injection
-# was removed 2026-07-31 and the agent reads the file itself. Kept because the
-# MEASUREMENTS are why the cap exists at all, and because a design record that
-# quietly deletes its reversed half teaches the next reader nothing. Do not read
-# any of this as an explanation of how enforcement works now — that is the
-# block above.
-#
-# MEASURED before changing anything: every agent's tail was over the old
-# 20,000-char inject cap, none of them slightly.
-#     43,291 · 35,975 · 37,843 · 72,596  (four agents, one house)
-# The cap had never once been met, so it was not a limit — it fired every
-# compaction and silently dropped the END of the file, i.e. the most recent
-# material before the seam. ~109,705 chars lost across four agents each time.
-# **That is why truncation now runs from the top.**
-#
-# Four changes made then:
-#   1. THINKING DROPPED. Reasoning was capped at 300 chars, so it arrived as
-#      truncated fragments — the anxiety without the resolution. It is also the
-#      single most RECONSTRUCTABLE thing in the file: same agent, same situation,
-#      similar thoughts. The owner's exact words cannot be regenerated at all.
-#      Spending the budget on our deliberation stored the recoverable and
-#      dropped the irrecoverable.  [STILL LIVE]
-#   2. TOOL CALLS DROPPED — never carried texture, only volume.  [STILL LIVE]
-#   3. CONSECUTIVE DUPLICATE MESSAGES COLLAPSED — a relog/auth error repeating
-#      N times now reads once with a count.  [STILL LIVE — but the key now
-#      includes the SPEAKER; see collapse_repeats().]
-#   4. HARD CAP at 30,000, and this hook INJECTS the tail itself rather than
-#      telling the agent to go read it.  ⛔ **REVERSED 2026-07-31.** The cap
-#      survived and moved to the write path; the injection did not survive at
-#      all. For two weeks this package's own records explained the cap's
-#      non-enforcement in terms of an injected copy that no longer existed.
-# ---------------------------------------------------------------------------
-
-# Where to log failures so they're visible to next-agent (sibling of the tail).
-# Label written for the human's turns in the tail. Set to whatever the owner
-# is called in your house; it appears in every user turn of every tale.
+# Label written for direct user turns in the tail.
 OWNER_LABEL = "User"
 
 ERR_LOG_NAME = "last_session_tail.err.log"
 
 
 def owner_words(text):
-    """Return [(speaker_or_None, words), ...] spoken in a `user` turn. [] to skip.
-
-    ⚠️ THE BUG THIS REPLACES — the worst one this package ever had, because it
-    destroyed exactly the material the package exists to preserve.
-
-    The old test was `not text.startswith("<")`, meant to skip runtime markup.
-    But every message relayed through an external channel arrives wrapped in a
-    `<channel ...>` envelope. So the filter discarded ALL of them. Measured on a
-    single live transcript: **12,181 owner turns dropped.** Across four agents,
-    every "owner" line that survived into a tale was a scheduler prompt — not
-    one was a person speaking. The file whose header promises the owner's exact
-    words contained none of them, and had not for its entire existence.
-
-    The design rationale made it worse rather than better: reasoning was dropped
-    on the grounds that the agent's thoughts are reconstructable while the
-    owner's words are not. The filter then discarded the irreplaceable half and
-    kept the recoverable one.
-
-    Three behaviours, in order:
-      1. Channel envelopes are UNWRAPPED, not skipped — the inner text is the
-         message, and the envelope's `user` attribute names who said it, so a
-         relayed sibling is never printed under the owner's name. Trailing
-         runtime commentary outside the envelope is dropped.
-      2. Genuine markup (a `<` followed by a LETTER) is skipped. Ordinary speech
-         beginning with `<` — "<3 this matters" — is kept, because `3` is not a
-         letter and the old blanket test ate sentences like that too.
-      3. Only the exact resume banner is skipped, not every line that happens to
-         begin "This session".
-    """
+    """Return direct or envelope-unwrapped user text; skip runtime markup."""
     if not text:
         return []
     relayed = [(CHANNEL_USER_RE.search(attrs), body.strip())
@@ -154,14 +55,7 @@ def owner_words(text):
 
 
 def ts_local(entry):
-    """Parse an entry timestamp, or return None.
-
-    GUARDED DELIBERATELY. A single malformed timestamp anywhere in the
-    transcript used to raise ValueError out of main(), producing a traceback,
-    exit 1, no tale, and no error log — which falsified this package's own
-    "every failure path exits 0" claim. One bad row must not cost the whole
-    tale; format_turn already renders a missing timestamp as `?`.
-    """
+    """Parse an entry timestamp, or return None for malformed values."""
     raw = entry.get("timestamp")
     if not raw:
         return None
@@ -172,21 +66,7 @@ def ts_local(entry):
 
 
 def is_skill_invocation(text):
-    """True if a 'user' turn is really a skill/cron payload, not the owner talking.
-
-    WHY (measured, 2026-08-01): every /circadian-heartbeat fires with the
-    full SKILL.md attached and it was being recorded as an 11,235-char owner
-    turn. Seven crons a day, 40-turn window. Measured across the four CC agents:
-
-        agent A  37,151 chars | 33,720 boilerplate (91%)
-        agent B  46,019 chars | 33,715 boilerplate (73%)
-        agent C  17,139 chars | 11,242 boilerplate (66%)
-
-    One agent had ~3,400 chars of real conversation left in an entire tail. The
-    tale exists to hold the material nearest the seam; skill text was eating it.
-    Kept deliberately narrow — matches the invocation preamble, not content that
-    merely mentions a skill.
-    """
+    """Return true for known skill/cron payload preambles only."""
     head = text[:400]
     return (
         head.startswith("Base directory for this skill:")
@@ -232,19 +112,8 @@ def get_recent_turns(path, agent_label, n=TAIL_TURNS):
                 ).strip()
             else:
                 text = ""
-            # ⚠️ ORDER IS LOAD-BEARING. The envelope test runs FIRST, because a
-            # relayed message is POSITIVE EVIDENCE OF A PERSON and must outrank
-            # every machine-row heuristic below it.
-            #
-            # This ordering exists because getting it wrong reproduced the very
-            # bug being fixed. The runtime marks relayed human messages with the
-            # SAME `isMeta` / `promptSource` fields it puts on scheduled prompts.
-            # A skip-if-marked test placed ahead of the unwrap therefore deletes
-            # every relayed message — which is exactly what the old `startswith`
-            # filter did, arriving by a different route.
-            #
-            # Owner ruling 2026-08-15: "No cron injections should be shown in
-            # Tail Tales. My user messages SHOULD be there."
+            # Parse channel envelopes before runtime-row exclusions: relayed
+            # messages can carry the same metadata as scheduled prompts.
             spoken = owner_words(text)
             if not spoken:
                 continue
@@ -264,15 +133,11 @@ def get_recent_turns(path, agent_label, n=TAIL_TURNS):
                 continue
             for block in content:
                 btype = block.get("type")
-                # `thinking` and `tool_use` deliberately skipped (2026-07-29).
-                # Reasoning is reconstructable by the same agent; the owner's words
-                # are not. Tool calls were pure volume.
+                # Exclude reasoning and tool-use blocks from persisted output.
                 if btype == "text":
                     t = block.get("text", "").strip()
                     if t:
-                        # Intentionally uniform internal label across detect/count/format.
-                        # Do not re-split into per-agent labels; that recreated the old
-                        # copy/rename sync footgun identified in owner review.
+                        # Keep one internal label for detection, counting, and formatting.
                         turns.append({"type": "agent", "ts": ts, "text": t})
 
     last_boundary = max(
@@ -293,27 +158,7 @@ def get_recent_turns(path, agent_label, n=TAIL_TURNS):
 
 
 def collapse_repeats(turns):
-    """Collapse consecutive turns with identical text from THE SAME SPEAKER.
-
-    Added 2026-07-29 (owner ruling): a relog/auth error that fires N times used to eat
-    N slots of a budget that was already over cap. Now it reads once, with a count.
-    Only CONSECUTIVE identical text collapses — a phrase legitimately repeated
-    later in the conversation is left alone, because that repetition is real.
-
-    ⚠️ SPEAKER IS PART OF THE KEY, AND MUST STAY THERE (fixed 2026-08-15).
-
-    The key was `type` + `text` only. That was harmless while every relayed turn
-    rendered under one label — and became a defect the moment relayed speakers
-    were preserved, because two different people saying the same words
-    consecutively collapsed into one turn under the FIRST speaker's name.
-    Measured: three turns from two speakers produced a single
-    `Alice: same words (×3)`. Bob did not merely lose his attribution; he
-    disappeared, and his words were printed as someone else's.
-
-    **A fix for misattribution opened a second path to misattribution.** In a
-    continuity record the speaker is not decoration — whoever the file says
-    spoke is who the next agent will believe spoke.
-    """
+    """Collapse only adjacent text-equal turns from the same speaker and type."""
     out = []
     for t in turns:
         prev = out[-1] if out else None
@@ -331,10 +176,7 @@ def format_turn(t, agent_label):
     rep = t.get("repeats", 1)
     suffix = f"  *(×{rep} — identical message repeated)*" if rep > 1 else ""
     if typ == "owner":
-        # A relayed turn is printed under the name the envelope gave it, so a
-        # third party's words are never rendered as the owner's. Attribution in
-        # a continuity record is not cosmetic — whoever the file says spoke is
-        # who the next agent will believe spoke.
+        # Preserve the channel-envelope speaker label when present.
         speaker = t.get("speaker") or OWNER_LABEL
         return f"**[{ts_str}] {speaker}:** {t['text']}{suffix}\n"
     if typ == "agent":
@@ -354,11 +196,8 @@ def build_tale(header, body, cap=HARD_CAP):
 
     Returns (text, dropped_turn_count).
 
-    THE DIRECTION IS LOAD-BEARING. Truncation is from the TOP — owner ruling,
-    2026-08-15: "truncation is from the *top* of the file, not the bottom."
-    The turns nearest the compaction seam are exactly what a returning agent
-    needs, so they are the last thing to go. An earlier cap elsewhere in this
-    household cut from the end and silently removed precisely that material.
+    Truncation removes oldest turns so the newest compaction-adjacent material
+    remains in the bounded output.
 
     The header always survives, so a trimmed tale still says whose it is, when
     it was written, and which transcript it came from. A trim is announced in
@@ -394,9 +233,7 @@ def build_tale(header, body, cap=HARD_CAP):
     dropped = len(body) - len(kept)
     text = "\n".join(header[:-1] + [TRIM_NOTE.format(cap=cap, n=dropped), ""] + kept)
 
-    # Guarantee the invariant by construction rather than by arithmetic: if the
-    # recomputed notice nudged us over, shed further OLDEST entries. Never slice
-    # the tail — that would cut the newest material and invert the ruling.
+    # If recomputing the trim notice exceeds the cap, remove more oldest entries.
     while len(text) > cap and kept:
         kept.pop(0)
         dropped += 1
@@ -440,7 +277,7 @@ def main():
                         help="Override output filename (default: last_session_tail.md)")
     args, _ = parser.parse_known_args()
 
-    # Read and parse stdin payload — canonical source for transcript_path and cwd.
+    # Read and parse stdin payload for transcript_path and cwd.
     try:
         payload_text = sys.stdin.read()
         payload = json.loads(payload_text) if payload_text else {}
@@ -452,9 +289,7 @@ def main():
     transcript_str = payload.get("transcript_path")
     cwd_str = payload.get("cwd")
 
-    # Safety-review hardening (2026-06-11): if we have a workspace,
-    # failures must be visible there; stderr-only is acceptable only when
-    # there is no trustworthy workspace to write to.
+    # Write eligible failures to the workspace log when a workspace is available.
     if not cwd_str:
         sys.stderr.write("tail-tales: stdin payload missing cwd\n")
         return
@@ -493,14 +328,7 @@ def main():
     ]
     body = [b for t in turns if (b := format_turn(t, agent_label))]
 
-    # Write the tail to disk. The agent reads it via the continuity file list.
-    # Injection removed 2026-07-31 (owner ruling): Tail Tales writes only, and a
-    # separate hook tells agents to read their continuity files on compaction.
-    #
-    # THE CAP IS ENFORCED HERE, ON THE WRITE PATH. There is exactly one file and
-    # no injected copy, so this is the only place a limit can live. Owner ruling
-    # 2026-08-15: "Enforcement on Tail Tales is NOT necessary [at git]. Tail Tales
-    # are re-written every compaction. The enforcement comes from the write-path."
+    # Write the bounded tail to disk; this hook does not inject its contents.
     full_text, dropped = build_tale(header, body)
     try:
         # Generate the output directory. A fresh install points --output-dir at a
