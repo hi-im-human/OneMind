@@ -178,6 +178,20 @@ top-level folder headings, and direct child entries appear; no depth-2 file appe
 **FAIL if:** a file outside the marker block changes, the command reports a refusal on
 a correctly prepared target, or depth-2 content renders.
 
+## 12. Declared external junction target — both directions
+
+Run the packaged contract suite on Windows:
+
+```text
+python "<PACKAGE_ROOT>/tests/trusted_roots_tests.py"
+```
+
+**Expect:** an undeclared junction target fails in both the hook and checker; the
+same target succeeds only after its exact external directory appears in
+`trusted_roots`; a sibling root, absolute `dir`, and literal `..` remain refused.
+The suite also verifies the directory generator shares the successful declared-root
+contract.
+
 ---
 
 ## Record of runs

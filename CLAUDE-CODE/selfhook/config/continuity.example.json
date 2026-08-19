@@ -1,6 +1,7 @@
 {
-  "_comment": "Copy to continuity.json. Set workspace to an existing absolute path. Every listed and capped file must exist within that workspace. Sections render in configuration order. A section without events renders for every event. Caps are enforced only when check_limits.py is wired into a local workflow. See !SPECS.md for the complete configuration contract.",
+  "_comment": "Copy to continuity.json. Set workspace to an existing absolute path. Listed and capped paths stay workspace-relative. Optional trusted_roots authorizes resolved targets beneath specific external directories (for example, an owner-created junction) without weakening default-deny. Sections render in configuration order. A section without events renders for every event. Caps are enforced only when check_limits.py is wired into a local workflow. See !SPECS.md for the complete configuration contract.",
   "workspace": "<WORKSPACE>",
+  "trusted_roots": [],
   "sections": [
     {
       "slug": "startup-files",

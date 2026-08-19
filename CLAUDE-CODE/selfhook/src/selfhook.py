@@ -49,8 +49,11 @@ sections can subscribe to specific events:
     "PostCompact":  [... "command": "python \"<PACKAGE_ROOT>/src/selfhook.py\" --config \"<PACKAGE_ROOT>/config/continuity.json\" --event PostCompact" ...]
 """
 
+from __future__ import annotations
+
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -58,7 +61,7 @@ VALID_EVENTS = {"SessionStart", "PostCompact"}
 # Strict key contract: a misspelled key ('event', 'read_file', 'section', 'cap')
 # would otherwise produce a healthy-looking partial configuration — the exact
 # failure class this package exists to prevent. '_comment' allowed everywhere.
-ALLOWED_ROOT_KEYS = {"_comment", "workspace", "sections", "caps"}
+ALLOWED_ROOT_KEYS = {"_comment", "workspace", "trusted_roots", "sections", "caps"}
 ALLOWED_SECTION_KEYS = {"_comment", "slug", "header", "events", "text", "read_files"}
 ALLOWED_READ_FILES_KEYS = {"_comment", "dir", "patterns"}
 ALLOWED_CAP_KEYS = {"_comment", "path", "limit"}
@@ -98,21 +101,75 @@ def load_config(path: Path) -> dict:
         return json.load(f)
 
 
-def contained(workspace: Path, target: Path) -> bool:
-    """True iff target — fully resolved, symlinks included — is under workspace."""
+def contained(root: Path, target: Path) -> bool:
+    """True iff target — fully resolved, symlinks included — is under root."""
     try:
-        target.resolve().relative_to(workspace.resolve())
+        target.resolve().relative_to(root.resolve())
         return True
     except (ValueError, OSError):
         return False
 
 
-def check_rel_dir(errors: list, owner: str, workspace: Path, d):
+def lexically_contained(workspace: Path, target: Path) -> bool:
+    """True iff target stays under workspace before symlink/junction resolution.
+
+    A configured pointer must name a path *inside* the workspace. This deliberately
+    differs from ``contained``: a declared junction under the workspace may resolve
+    into a trusted external root, but a literal ``..`` or absolute escape may not.
+    """
+    try:
+        lexical_workspace = Path(os.path.abspath(workspace))
+        lexical_target = Path(os.path.abspath(target))
+        lexical_target.relative_to(lexical_workspace)
+        return True
+    except (ValueError, OSError):
+        return False
+
+
+def contained_or_trusted(workspace: Path, target: Path, trusted_roots: list[Path]) -> bool:
+    """Allow resolved targets inside workspace or an owner-declared trusted root."""
+    return contained(workspace, target) or any(contained(root, target) for root in trusted_roots)
+
+
+def validate_trusted_roots(cfg) -> tuple[list[Path], list]:
+    """Validate optional owner-declared roots for intentional external targets.
+
+    The allowlist is opt-in and default-deny: absent/empty preserves the original
+    contract. Entries name existing absolute directories. They only authorize a
+    *resolved target* beneath that exact root; configured paths remain relative to
+    the workspace and ordinary escapes continue to fail.
+    """
+    E = "[SELFHOOK CONFIG ERROR]"
+    if "trusted_roots" not in cfg:
+        return [], []
+    raw_roots = cfg["trusted_roots"]
+    if not isinstance(raw_roots, list):
+        return [], [f"{E} 'trusted_roots' must be a list of absolute existing directories"]
+
+    roots: list[Path] = []
+    errors = []
+    for i, raw in enumerate(raw_roots):
+        if not isinstance(raw, str):
+            errors.append(f"{E} trusted_roots entry #{i} must be a string")
+            continue
+        root = Path(raw)
+        if not root.is_absolute():
+            errors.append(f"{E} trusted_roots entry {raw!r} must be absolute")
+            continue
+        if not root.is_dir():
+            errors.append(f"{E} trusted_roots entry {raw!r} is not an existing directory")
+            continue
+        roots.append(root.resolve())
+    return roots, errors
+
+
+def check_rel_dir(errors: list, owner: str, workspace: Path, trusted_roots: list[Path], d):
     """Type-check + contain a config-supplied directory. Returns base or None.
 
     Every pointer this hook renders is an instruction the agent will obey —
     a path that escapes the workspace is an instruction to read outside it.
-    Rejected: non-string, absolute, `..`, and symlink escapes (via resolve())."""
+    Rejected: non-string, absolute, literal workspace escapes, and resolved targets
+    outside the workspace or an explicit trusted root."""
     E = "[SELFHOOK CONFIG ERROR]"
     if not isinstance(d, str):
         errors.append(f"{E} {owner}: 'dir' must be a string, got {type(d).__name__}")
@@ -121,8 +178,11 @@ def check_rel_dir(errors: list, owner: str, workspace: Path, d):
         errors.append(f"{E} {owner}: 'dir' must be workspace-relative, not absolute")
         return None
     base = workspace / d
-    if not contained(workspace, base):
+    if not lexically_contained(workspace, base):
         errors.append(f"{E} {owner}: 'dir' {d!r} escapes the workspace — rejected")
+        return None
+    if not contained_or_trusted(workspace, base, trusted_roots):
+        errors.append(f"{E} {owner}: 'dir' {d!r} resolves outside the workspace and trusted_roots — rejected")
         return None
     return base
 
@@ -169,6 +229,9 @@ def validate(cfg, workspace: Path) -> list:
     errors = validate_workspace(workspace)
     if errors:
         return errors  # nothing below is meaningful against a bad root
+    trusted_roots, root_errors = validate_trusted_roots(cfg)
+    if root_errors:
+        return root_errors
     sections = cfg.get("sections", [])
     if not isinstance(sections, list):
         return errors + [f"{E} 'sections' must be a list"]
@@ -210,7 +273,7 @@ def validate(cfg, workspace: Path) -> list:
             errors.append(f"{E} {owner}: unknown read_files key(s) {unknown} — "
                           f"allowed: {sorted(ALLOWED_READ_FILES_KEYS)}")
             continue
-        base = check_rel_dir(errors, owner, workspace, rf.get("dir", ""))
+        base = check_rel_dir(errors, owner, workspace, trusted_roots, rf.get("dir", ""))
         if base is None:
             continue
         for pattern in rf["patterns"]:
@@ -225,9 +288,9 @@ def validate(cfg, workspace: Path) -> list:
                 if not matches:
                     errors.append(f"{E} {owner}: glob '{pattern}' matches nothing under {base}")
                 for m in matches:
-                    if not contained(workspace, m):
-                        errors.append(f"{E} {owner}: '{m.name}' resolves outside "
-                                      "the workspace — rejected")
+                    if not contained_or_trusted(workspace, m, trusted_roots):
+                        errors.append(f"{E} {owner}: '{m.name}' resolves outside the "
+                                      "workspace and trusted_roots — rejected")
                     elif not m.is_file():
                         errors.append(f"{E} {owner}: glob '{pattern}' matched "
                                       f"'{m.name}', which is not a regular file — "
@@ -236,23 +299,27 @@ def validate(cfg, workspace: Path) -> list:
                 f = base / pattern
                 if not f.exists():
                     errors.append(f"{E} {owner}: configured file '{pattern}' not found under {base}")
-                elif not contained(workspace, f):
-                    errors.append(f"{E} {owner}: '{pattern}' resolves outside "
-                                  "the workspace — rejected")
+                elif not contained_or_trusted(workspace, f, trusted_roots):
+                    errors.append(f"{E} {owner}: '{pattern}' resolves outside the "
+                                  "workspace and trusted_roots — rejected")
                 elif not f.is_file():
                     errors.append(f"{E} {owner}: '{pattern}' is not a regular file — "
                                   "a directory cannot be a pointer target")
-    errors.extend(validate_caps(cfg, workspace))
+    errors.extend(validate_caps(cfg, workspace, trusted_roots))
     return errors
 
 
-def validate_caps(cfg, workspace: Path) -> list:
+def validate_caps(cfg, workspace: Path, trusted_roots: list[Path] | None = None) -> list:
     """Caps validation — shared by the hook and check_limits.py, one contract.
 
     A missing or malformed cap target FAILS: a typo'd path would otherwise
     turn the cap off silently, and everyone would keep believing in it."""
     E = "[SELFHOOK CAPS ERROR]"
     errors = []
+    if trusted_roots is None:
+        trusted_roots, root_errors = validate_trusted_roots(cfg)
+        if root_errors:
+            return root_errors
     if not isinstance(cfg, dict) or "caps" not in cfg:
         return [f"{E} missing required 'caps' list (use [] for none) — a misspelled "
                 "'caps' key must not silently disable every cap"]
@@ -277,9 +344,11 @@ def validate_caps(cfg, workspace: Path) -> list:
         if not f.exists():
             errors.append(f"{E} caps entry '{entry['path']}': file not found — "
                           "a typo must not disable a cap silently")
-        elif not contained(workspace, f):
-            errors.append(f"{E} caps entry '{entry['path']}': resolves outside "
-                          "the workspace — rejected")
+        elif not lexically_contained(workspace, f):
+            errors.append(f"{E} caps entry '{entry['path']}': path escapes the workspace — rejected")
+        elif not contained_or_trusted(workspace, f, trusted_roots):
+            errors.append(f"{E} caps entry '{entry['path']}': resolves outside the "
+                          "workspace and trusted_roots — rejected")
         elif not f.is_file():
             errors.append(f"{E} caps entry '{entry['path']}': not a regular file — "
                           "only files can be capped")

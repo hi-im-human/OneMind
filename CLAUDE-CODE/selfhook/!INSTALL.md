@@ -9,6 +9,10 @@
 
 1. Copy `config/continuity.example.json` to `config/continuity.json` and set its
    `workspace` to `<WORKSPACE>`. Ensure every configured section/cap path exists.
+   Paths remain workspace-relative. If an owner-created junction or symlink under
+   the workspace intentionally resolves outside it, add only its external target
+   directory to `trusted_roots` (an absolute existing directory). Leave the list
+   empty for the default-deny layout; never use it as a general read-path allowlist.
 2. Prepare `<WORKSPACE>/.memory/MEMORY.md`.
    - For a new workspace, copy `templates/MEMORY.md`.
    - For an existing file, retain its frontmatter and other content, then add the two

@@ -12,8 +12,13 @@
 
 ## Configuration contract
 
-`workspace` is an existing absolute path. Sections and caps remain workspace-relative,
-resolve inside that workspace, and target regular files. Unknown keys, malformed
+`workspace` is an existing absolute path. Sections and caps remain workspace-relative
+and target regular files. By default, their resolved targets must remain inside that
+workspace. `trusted_roots` is an optional list of absolute existing directories: it
+allows a workspace-relative path that traverses an owner-created junction or symlink
+to resolve beneath one declared root. It does **not** allow absolute `dir`/cap paths,
+literal workspace escapes, or targets outside a declared root. An absent or empty
+`trusted_roots` preserves the default-deny contract. Unknown keys, malformed
 sections, duplicate slugs, invalid paths, and invalid caps fail validation.
 
 The directory generator carries no second identity list. Its only configured authority
