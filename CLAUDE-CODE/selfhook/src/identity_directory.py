@@ -148,6 +148,23 @@ def _file_line(f: Path, rel: str) -> tuple[str, bool]:
     return f"- [{f.stem}]({rel})", False
 
 
+def print_preview(text: str) -> None:
+    """Print a human preview without letting a legacy console abort the operation.
+
+    The generated directory can contain Unicode (including its folder/file icons).
+    A Windows cp1252 console cannot encode every such character. The preview is
+    display-only: degrade unencodable characters to ``?`` and say so rather than
+    making the requested write or check fail.
+    """
+    try:
+        print(text)
+    except UnicodeEncodeError:
+        encoding = sys.stdout.encoding or "utf-8"
+        fallback = text.encode(encoding, errors="replace").decode(encoding)
+        print(fallback)
+        print("[preview note: unsupported console characters were replaced]")
+
+
 def build_block(mem: Path, link_prefix: str, eol: bytes) -> tuple[bytes, int, int]:
     """
     `.memory/` with only flat folders/files and depth-1 children. Per top-level folder:
@@ -269,16 +286,18 @@ def main() -> int:
         print(f"UP TO DATE — {n} entr(ies){miss_note}.")
         return 0
 
-    if args.quiet:
-        print(f"CHANGED — {n} entr(ies){miss_note}, {len(new_block.splitlines())} line(s)")
-    else:
+    def report_changed() -> None:
+        if args.quiet:
+            print(f"CHANGED — {n} entr(ies){miss_note}, {len(new_block.splitlines())} line(s)")
+            return
         eol_name = "CRLF" if eol == CRLF else "LF"
         bom_name = "yes" if bom else "no"
         print(f"CHANGED — {n} entr(ies){miss_note}  [eol={eol_name}, bom={bom_name}]")
         print("--- generated block ---")
-        print(new_block.decode("utf-8", errors="replace").rstrip())
+        print_preview(new_block.decode("utf-8", errors="replace").rstrip())
 
     if not args.write:
+        report_changed()
         if not args.quiet:
             print("\nCheck-only. Nothing written.")
         return 0
@@ -329,6 +348,9 @@ def main() -> int:
     a_body = after[len(bom) :] if after.startswith(BOM) else after
     frontmatter_end(a_body, "MEMORY.md (post-write)")  # refuses if damaged
 
+    # The requested write and its postconditions are complete before any optional
+    # human preview. A display-only encoding issue must never block this operation.
+    report_changed()
     print("\nWRITTEN — exact bytes verified; frontmatter re-parsed; no concurrent edit lost.")
     return 0
 

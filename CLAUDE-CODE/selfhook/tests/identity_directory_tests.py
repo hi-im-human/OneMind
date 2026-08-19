@@ -15,6 +15,7 @@ import subprocess
 import sys
 import tempfile
 import json
+import os
 from pathlib import Path
 
 SUT = Path(__file__).parents[1] / "src" / "identity_directory.py"
@@ -52,6 +53,15 @@ def run(root: Path, *extra: str) -> subprocess.CompletedProcess:
     return subprocess.run(
         [sys.executable, str(SUT), "--config", str(root / "continuity.json"), *extra],
         capture_output=True, text=True,
+    )
+
+
+def run_cp1252(root: Path, *extra: str) -> subprocess.CompletedProcess:
+    """Force the Windows legacy-output surface that cannot encode the folder icon."""
+    env = dict(os.environ, PYTHONIOENCODING="cp1252")
+    return subprocess.run(
+        [sys.executable, str(SUT), "--config", str(root / "continuity.json"), *extra],
+        capture_output=True, text=False, env=env,
     )
 
 
@@ -221,6 +231,33 @@ root = fixture(mem(), {"p.md": ID_OK})  # check-only must not write
 before = (root / ".memory" / "MEMORY.md").read_bytes()
 run(root)
 check("check-only writes nothing", (root / ".memory" / "MEMORY.md").read_bytes() == before, "FILE CHANGED")
+shutil.rmtree(root, ignore_errors=True)
+
+# ---------------------------------------------------------- preview is cosmetic
+print("\n[preview compatibility — cosmetic output never blocks work]")
+root = fixture(mem(), {"p.md": ID_OK})
+target = root / ".memory" / "MEMORY.md"
+before = target.read_bytes()
+r = run_cp1252(root, "--write")
+out = r.stdout.decode("cp1252", errors="strict")
+check("cp1252 --write -> exit 0", r.returncode == 0, f"exit={r.returncode}: {r.stderr!r}")
+check("  ...write completed before preview", target.read_bytes() != before, "MEMORY.md unchanged")
+check("  ...preview degrades visibly", "preview note: unsupported console characters were replaced" in out, out[:160])
+shutil.rmtree(root, ignore_errors=True)
+
+root = fixture(mem(), {"p.md": ID_OK})
+target = root / ".memory" / "MEMORY.md"
+before = target.read_bytes()
+r = run_cp1252(root)
+out = r.stdout.decode("cp1252", errors="strict")
+check("cp1252 check-only -> exit 0", r.returncode == 0, f"exit={r.returncode}: {r.stderr!r}")
+check("  ...check-only still writes nothing", target.read_bytes() == before, "FILE CHANGED")
+check("  ...check-only preview degrades visibly", "preview note: unsupported console characters were replaced" in out, out[:160])
+shutil.rmtree(root, ignore_errors=True)
+
+root = fixture(mem(), {"p.md": ID_OK})
+r = run(root, "--write")
+check("UTF-8 preview remains readable", "## 📂 identity" in r.stdout, r.stdout[:160])
 shutil.rmtree(root, ignore_errors=True)
 
 # ------------------------------------------------------------- concurrent edit
