@@ -1,0 +1,15 @@
+{
+  "_comment": "Merge the SessionStart entry below into your agent's settings.json (project-level .claude/settings.json or ~/.claude-<agent>/settings.json). Replace the path with wherever you put the script; forward slashes work on Windows and avoid JSON escaping mistakes. Runs on session start and after compaction: recognized stock/v1 copies are updated, current copies are unchanged, and unfamiliar copies return nonzero for inspection.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"C:/path/to/patch_discord_bot_filter.py\""
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "name": "Claude Code Discord Bot-to-Bot Visibility Package",
+  "slug": "claude-code-discord-bot-filter-patcher",
+  "version": "v26.08.21_d1",
+  "description": "Applies an allowlist-aware local compatibility patch to recognized Claude Code Discord plugin source.",
+  "license": "Apache-2.0",
+  "tool_card": "TOOL.md",
+  "skill": "SKILL.md",
+  "spec": "!SPECS.md",
+  "install": "!INSTALL.md",
+  "command": "python src/patch_discord_bot_filter.py [--dry-run] [--no-home-scan] [EXTRA_ROOT ...]",
+  "inputs": {
+    "dry_run": {
+      "required": false,
+      "type": "boolean",
+      "description": "Report recognized state without writing."
+    },
+    "no_home_scan": {
+      "required": false,
+      "type": "boolean",
+      "description": "Exclude default home scan roots and use explicit roots only."
+    },
+    "extra_roots": {
+      "required": false,
+      "type": "array",
+      "description": "Additional existing Claude configuration roots to scan."
+    }
+  },
+  "outputs": {
+    "type": "text",
+    "description": "Per-file state, summary counts, and process exit status."
+  },
+  "safety": {
+    "read_only": false,
+    "writes_files": true,
+    "destructive": false,
+    "uses_network": false,
+    "uses_shell": false,
+    "requires_confirmation": true,
+    "max_output_chars": 20000
+  },
+  "permissions": {
+    "default_allowed_actors": ["operator"],
+    "requires_admin": false
+  },
+  "status": "release-gate-passed-2026-08-21"
+}

@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "package": "claude-code-discord-bot-filter-patcher",
+  "release_status": "passed",
+  "install": {
+    "fresh_home_passed": true,
+    "agent_reader_passed": true,
+    "costs_disclosed": true,
+    "human_reader_passed": false,
+    "hands_on_minutes": 8
+  },
+  "paths": {
+    "package_home": "<TEMP_PACKAGE_HOME>/package containing src/, tests/, config/, and !SCHEMA files",
+    "runtime_home": "~/.claude*/plugins/{cache/claude-plugins-official/discord/*/server.ts, marketplaces/.../server.ts}",
+    "continuity_data_home": "none created by package",
+    "generated_files": []
+  },
+  "smoke_tests": {
+    "passed": true,
+    "command": "python src/patch_discord_bot_filter.py --no-home-scan <ISOLATED_TEST_ROOT>"
+  },
+  "factual_runtime_claims": [
+    {
+      "claim": "Stock dry-run produces 'would be patched', exit 0, byte-identical fixture",
+      "surface": "!README.md, tests/SMOKE_TESTS.md",
+      "evidence": "Tested stock fixture: dry-run reported 'would be patched' for 2 files, exit 0, hashes unchanged",
+      "status": "passed"
+    },
+    {
+      "claim": "Stock apply produces 'patched', exit 0, current block replaces stock",
+      "surface": "!README.md, tests/SMOKE_TESTS.md",
+      "evidence": "Stock fixture: apply reported 'patched' for 2 files, exit 0, file hashes changed, v2 block present",
+      "status": "passed"
+    },
+    {
+      "claim": "Second apply (idempotence) produces 'already', exit 0, byte-identical",
+      "surface": "tests/SMOKE_TESTS.md",
+      "evidence": "Second apply on patched fixture: 'already' for 2 files, exit 0, hashes unchanged",
+      "status": "passed"
+    },
+    {
+      "claim": "All three v1 variants upgrade to v2 and report 'already' on rerun",
+      "surface": "src/patch_discord_bot_filter.py lines 91-109, tests/SMOKE_TESTS.md",
+      "evidence": "Tested all 3 v1 header variants: each dry-run 'would be upgraded', apply 'upgraded', second apply 'already', exit 0",
+      "status": "passed"
+    },
+    {
+      "claim": "Unfamiliar/mixed/duplicate/known+unknown are refused nonzero, byte-preserved",
+      "surface": "!SPECS.md, src/patch_discord_bot_filter.py lines 162-178",
+      "evidence": "Tested unfamiliar, mixed, duplicate, known+unknown: all 'skipped (unfamiliar)', exit 2, hashes unchanged",
+      "status": "passed"
+    },
+    {
+      "claim": "Unknown option exits 3 before discovery or write",
+      "surface": "src/patch_discord_bot_filter.py lines 205-210, !README.md",
+      "evidence": "Tested --no-home-scna (typo): exit 3, error message shown, no scan performed",
+      "status": "passed"
+    },
+    {
+      "claim": "--no-home-scan isolates discovery to explicit roots only",
+      "surface": "!INSTALL.md, src/patch_discord_bot_filter.py lines 132-145",
+      "evidence": "--no-home-scan with explicit root found 2 files in that root; --no-home-scan alone found 0 files",
+      "status": "passed"
+    },
+    {
+      "claim": "v2 block contains self-drop, channel/parent-thread scope, group authorization",
+      "surface": "!SPECS.md, src/patch_discord_bot_filter.py lines 112-129",
+      "evidence": "Emitted v2 block verified: client.user self-drop line 12, scopeIds with channelId and parentId line 16, allowedInGroup check line 18",
+      "status": "passed"
+    },
+    {
+      "claim": "Emitted v2 TypeScript transpiles under Bun or equivalent parser",
+      "surface": "!RELEASE-CHECKLIST.md",
+      "evidence": "bun build on extracted v2 block: exit 0, transpiled successfully, no syntax errors",
+      "status": "passed"
+    },
+    {
+      "claim": "Hook snippet merges into settings.json and produces valid JSON",
+      "surface": "hook-snippet.settings.json, !INSTALL.md",
+      "evidence": "Merged hook into isolated settings fixture, python -m json.tool validated merged result",
+      "status": "passed"
+    },
+    {
+      "claim": "Planted bad mutation (exit 0 instead of 2 for unfamiliar) is detected",
+      "surface": "tests/SMOKE_TESTS.md",
+      "evidence": "Mutated patcher exit 0 on unfamiliar fixture; original patcher exit 2; test instrument correctly distinguished",
+      "status": "passed"
+    },
+    {
+      "claim": "File tails preserved after patching",
+      "surface": "Implicit in byte-preserving refusal and targeted block replacement",
+      "evidence": "Stock fixture after patching retained '// other code' and '// rest of file' lines unchanged",
+      "status": "passed"
+    },
+    {
+      "claim": "Windows runtime tested, POSIX unverified",
+      "surface": "!README.md, !DEPENDENCIES.md, !RELEASE-CHECKLIST.md",
+      "evidence": "All tests run on Windows 11 Home 10.0.26200, Python 3.11.9. POSIX noted as unverified in docs.",
+      "status": "passed"
+    },
+    {
+      "claim": "No network, credentials, or cache artifacts ship",
+      "surface": "!DEPENDENCIES.md, tests/SMOKE_TESTS.md",
+      "evidence": "Checked package for __pycache__, .pyc, .env, credentials, backups: none found after test cleanup",
+      "status": "passed"
+    },
+    {
+      "claim": "Python 3.9+ required, uses only standard library",
+      "surface": "!README.md, !DEPENDENCIES.md",
+      "evidence": "Runtime tested with Python 3.11.9; ast.parse(feature_version=(3,9)) passed; imports only pathlib, re, sys (all stdlib)",
+      "status": "passed"
+    }
+  ],
+  "license": {
+    "spdx": "Apache-2.0",
+    "dependencies_reviewed": true
+  },
+  "independent_review": {
+    "validator_rerun": true,
+    "onboarding_followed": true
+  },
+  "uninstall": {
+    "passed": true,
+    "evidence": "Removed isolated test fixture at <TEMP_TEST_ROOT> including stock/v1/v2/unfamiliar/mixed/duplicate/known-plus-unknown scenarios, settings-fixture, and bad-patcher copy. Package itself remains at <TEMP_PACKAGE_HOME> as the deliverable being tested. No pre-existing files outside test root modified."
+  },
+  "limitations": [
+    "Windows is the tested runtime for this release.",
+    "POSIX runtime is unverified.",
+    "The patcher creates no automatic backup."
+  ]
+}
