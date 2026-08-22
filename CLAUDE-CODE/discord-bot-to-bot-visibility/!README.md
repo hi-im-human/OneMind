@@ -1,3 +1,6 @@
+---
+description: Claude Code Discord-plugin patcher that preserves self and unknown-bot filtering while allowing explicitly allowlisted bot messages to reach the existing access gate.
+---
 # Claude Code Discord Bot-to-Bot Visibility Package
 
 **Version:** `v26.08.21_d1`  

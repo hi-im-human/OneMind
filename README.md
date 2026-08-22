@@ -12,6 +12,7 @@ schedule tooling, directory layouts, and related installation support.
 <!-- BEGIN GENERATED PACKAGE DIRECTORY -->
 - [_meta/](_meta/README.md) — Repository maintenance scripts and regression suites; not a runtime installation surface.
 - **CLAUDE-CODE/**
+  - [discord-bot-to-bot-visibility/](CLAUDE-CODE/discord-bot-to-bot-visibility/!README.md) — Claude Code Discord-plugin patcher that preserves self and unknown-bot filtering while allowing explicitly allowlisted bot messages to reach the existing access gate.
   - [freestyle-beats/](CLAUDE-CODE/freestyle-beats/!README.md) — Durable personal scheduler for Claude Code session-scoped cron work, with local state recovery and maintenance.
   - [selfhook/](CLAUDE-CODE/selfhook/!README.md) — Claude Code lifecycle renderer, PreCompact shallow memory-directory generator, and configuration validator.
   - **skills/**
@@ -26,7 +27,7 @@ schedule tooling, directory layouts, and related installation support.
       - **.claude/**
         - [hooks/](OneMind_Directory_Template/Agent_Homes/_AGENT_TEMPLATE/.claude/hooks/README.md) — Claude Code lifecycle hook scripts registered through settings.json.
         - [skills/](OneMind_Directory_Template/Agent_Homes/_AGENT_TEMPLATE/.claude/skills/README.md) — Claude Code skill directories, each containing a named SKILL.md procedure.
-  - [Energy_Co/](OneMind_Directory_Template/Energy_Co/README.md) — Shared package installation directory for components whose documentation declares this coordinate.
+  - [Energy_Co/](OneMind_Directory_Template/Energy_Co/README.md) — Shared machine-local installation root for automation packages—hooks, tools, agents, and operational infrastructure.
 <!-- END GENERATED PACKAGE DIRECTORY -->
 
 This block is generated from `description:` frontmatter in tracked package
