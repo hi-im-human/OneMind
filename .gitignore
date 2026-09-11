@@ -62,3 +62,33 @@ Thumbs.db
 *.bak
 *.bak-*
 *.orig
+
+# ── personal conversation archives: working area, never a commit ─────────
+# Added 2026-09-11 (Cael) during the Migration Loggers hardening pass.
+#
+# `Lumberjack_Logger/` is the LIVE working area for the migration extractors.
+# It currently holds Shannon's complete ChatGPT export (414 conversations,
+# ~117 MB of rendered personal history, including intimate ones) and a 22 MB
+# Claude App export zip. It was untracked but NOT ignored, so a single
+# `git add -A` in this public-facing repo would have staged all of it.
+#
+# Nothing is lost by ignoring it: these packages ship the way every other
+# OneMind package ships -- a deliberate, sanitized export, not by sitting in
+# someone's working directory. Per the header above, this is the backstop and
+# not the gate.
+# The whole tree stays out of THIS repo, code included.
+#
+# I first refined this to "ignore the data, track the code" -- then ran the
+# sanitization scan on what that made trackable, which is the step that decides it:
+#   - adapter_claude_code.py hardcodes real absolute paths (C:\Users\<user>\...)
+#     and agent home directories
+#   - redact_config.py is a personal-info REDACTION RULESET, which is by
+#     construction a list of the personal terms, including a real-name pattern
+# By the packaging standard these are LIVE/PRIVATE packages, not export-ready ones.
+# Private paths are exactly what a OneMind export replaces with placeholders, so
+# the code is no more publishable here than the archives are.
+#
+# Nothing is lost: these ship the way every other OneMind package ships -- a
+# deliberate sanitized export. Versioning the working code belongs in a private
+# repo, not this one. Backstop, not gate.
+Lumberjack_Logger/
