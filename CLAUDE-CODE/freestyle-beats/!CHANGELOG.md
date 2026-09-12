@@ -63,7 +63,7 @@ both verified present on the remote. Installed copies should pull to get the fix
 - Nothing in the existing suite pinned the old number or the old message text; checked
   before editing.
 - Pre-change bytes kept at `src/scheduler.py.bak-20260912-pre-cap-fix`.
-- Built by Cael; independently checked by Haven (diff, both suites, both directions,
+- Builder: Cael 🔩 · Reviewer: Haven 💙 (independent check: diff, both suites, both directions,
   and the `expected_tasks` maintenance accounting behind the −1).
 
 
