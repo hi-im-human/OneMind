@@ -1,6 +1,6 @@
 ---
 name: freestyle-beats
-description: Create, persist, reconcile, and pre-expiry refresh 2–8 personal Claude Code cron prompts from one workspace-local schedule.
+description: Create, persist, reconcile, and pre-expiry refresh 2–49 personal Claude Code cron prompts from one workspace-local schedule.
 argument-hint: setup | reconcile | maintain | refresh | replace
 ---
 
@@ -56,7 +56,7 @@ when the returned mode is `refresh`.
 1. Read `${CLAUDE_PROJECT_DIR}/WORK_GOALS.md` and
    `${CLAUDE_PROJECT_DIR}/PERSONAL_GOALS.md`. Stop and report the missing path if
    either is unavailable.
-2. Select **2–8 user beats once**. Each needs:
+2. Select **your user beats once** (2–49; put every beat that must survive a restart in the file, circadian and quest slots included). Each needs:
    - a stable lowercase-hyphen `id`;
    - label `work` or `personal`;
    - a canonical five-field cron expression interpreted in local time and subject to

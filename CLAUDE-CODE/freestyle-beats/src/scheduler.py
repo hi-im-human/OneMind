@@ -30,7 +30,16 @@ DEFAULT_MAINTENANCE_CRON = "17 4 * * *"
 MAINTENANCE_ID = "maintenance"
 CRON_TASK_LIMIT = 50
 REFRESH_AFTER = timedelta(days=5)
-MAX_USER_ENTRIES = 8
+# WHY (2026-09-12): this was a flat 8 until today, written 2026-08-18 as a
+# "sane day" guideline three weeks before the quest board began assigning three
+# slots per quest on top of seven circadian beats. The number did not merely
+# limit the file - it decided what the restore path was capable of knowing
+# about. A beat refused here still registers with CronCreate and fires, then
+# dies on the next restart with no record on either side of the seam: foreign-
+# task detection sees present-and-unmanaged, and this failure is absent-and-
+# unrecorded. An entry that cannot be written cannot be missed. The only
+# ceiling that belongs here is the platform's, less the maintenance task.
+MAX_USER_ENTRIES = CRON_TASK_LIMIT - 1
 MIN_USER_ENTRIES = 2
 MAX_PROMPT_CHARS = 2000
 ENTRY_ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}$")
@@ -255,7 +264,10 @@ def _validate_entries(raw_entries: Any) -> List[Dict[str, Any]]:
         raise ScheduleError("entries must be an array")
     if not MIN_USER_ENTRIES <= len(raw_entries) <= MAX_USER_ENTRIES:
         raise ScheduleError(
-            f"entries must contain {MIN_USER_ENTRIES}-{MAX_USER_ENTRIES} user beats"
+            f"entries must contain {MIN_USER_ENTRIES}-{MAX_USER_ENTRIES} user beats "
+            f"(Claude Code's {CRON_TASK_LIMIT}-task limit, less the maintenance task). "
+            "A live cron that is not in this file will not survive a restart: "
+            "the reconcile restores only what is written here."
         )
     entries = [_validate_entry(raw, index) for index, raw in enumerate(raw_entries)]
     ids = [entry["id"] for entry in entries]
@@ -1033,7 +1045,9 @@ def hook_notice(event: str, raw_stdin: str) -> Dict[str, Any]:
                 f"contains {enabled} enabled beat(s) plus maintenance at `{path}`. "
                 "Run `/freestyle-beats reconcile` now: load that file, call CronList, "
                 "and create/delete only the package-owned differences. Do not derive "
-                "a replacement schedule from the goal files."
+                "a replacement schedule from the goal files. "
+                "That count is from the file alone: a live beat not in this file is "
+                "invisible here and will not survive a restart."
             )
     except Exception as exc:
         notice = (

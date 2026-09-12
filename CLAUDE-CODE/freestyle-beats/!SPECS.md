@@ -55,7 +55,7 @@ Persisted schema version 2 contains:
 
 Constraints:
 
-- 2–8 user entries;
+- 2–49 user entries (`MAX_USER_ENTRIES = CRON_TASK_LIMIT - 1`; the flat 8 was removed 2026-09-12);
 - stable lowercase-hyphen IDs, unique within the schedule;
 - label exactly `work` or `personal`;
 - canonical five-field numeric cron syntax supported by Claude Code; fire time remains

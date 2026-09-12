@@ -2,8 +2,59 @@
 
 ## Current status
 
-**1.1.0 — release-verified.** Required local/live acceptance, independent review,
-sanitization, and link/version gates pass.
+**1.1.1 — persisted-beat ceiling fixed; release-verified.** Required local/live
+acceptance, independent review, sanitization, and link/version gates pass.
+
+⚑ **Next action:** none outstanding in the package. Any push of this change also
+carries the repository's unpushed local commit `f7c3e7d`; that is the repository
+owner's call, not the package's.
+
+## 2026-09-12 — 1.1.1 persisted-beat ceiling
+
+### Fixed
+
+- **`MAX_USER_ENTRIES` was a number of ours (8) and is now the platform's, less the
+  maintenance task (`CRON_TASK_LIMIT - 1` = 49).** The 8 was written 2026-08-18 as a
+  "sane day" guideline. It predates schedules that carry seven circadian beats plus
+  three assigned project slots, so the structural load — eleven — could not be written
+  to the file at all.
+- **The cap was not only a limit; it decided what the restore path could know about.**
+  `_validate_entries` refuses the FILE WRITE. It does not touch `CronCreate`, so a
+  refused beat still registers and still fires. The reconcile restores only what the
+  file holds, so the overflow beats vanish at the next restart **and leave no trace on
+  either side of the seam**: foreign-task classification detects present-and-unmanaged,
+  while this failure is absent-and-unrecorded. *An entry that cannot be written cannot
+  be missed.*
+- **The write-time refusal now names the consequence** rather than only the bound:
+  a live cron absent from this file will not survive a restart.
+- **The session notice now states what it cannot vouch for.** It previously reported a
+  count taken from the file and instructed the agent not to derive beats from anywhere
+  else — correct for preventing drift, and precisely what foreclosed the one recovery
+  path that would have noticed a missing beat. The count read as complete while being
+  silently partial.
+
+### Tests
+
+- `tests/test_restart_recovery_gap.py` — four red controls (structural load persists;
+  ceiling is the platform's; refusal names the restart consequence; notice admits what
+  it cannot see) and two green controls (an ordinary schedule stays valid; a count above
+  the platform limit is still refused — so the suite cannot pass on a build with no
+  validation at all).
+- Verified in both directions on the shipped object: with the fix, 6/6 new and 30/30
+  existing (1 skip); against the pre-fix bytes, 4 red and 2 green.
+- *Recorded because it nearly shipped:* the notice control first scraped module source
+  and failed with `ValueError: substring not found` — a fixture failure indistinguishable
+  from a real one, which would have gone green as soon as the anchor was corrected,
+  fix or no fix. It was rewritten against the rendered `hook_notice` output.
+
+### Notes
+
+- Nothing in the existing suite pinned the old number or the old message text; checked
+  before editing.
+- Pre-change bytes kept at `src/scheduler.py.bak-20260912-pre-cap-fix`.
+- Built by Cael; independently checked by Haven (diff, both suites, both directions,
+  and the `expected_tasks` maintenance accounting behind the −1).
+
 
 ## 2026-08-17 — 1.1.0 release promotion
 

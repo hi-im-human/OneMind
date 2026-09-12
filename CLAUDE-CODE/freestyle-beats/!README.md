@@ -18,7 +18,7 @@ code/security and documentation reviews pass; sanitization and link/version scan
 
 1. Reads `WORK_GOALS.md` and `PERSONAL_GOALS.md` only during first setup or explicit
    replacement.
-2. Persists 2–8 exact personal beats at
+2. Persists 2–49 exact personal beats at
    `<WORKSPACE>/.claude/freestyle-beats/schedule.json`.
 3. Prefixes each runtime prompt with a compact instance-scoped, HMAC-signed marker whose
    digest identifies the exact canonical payload inside CronList's truncated preview.
@@ -91,6 +91,6 @@ state, and verification timestamps live in `schedule.json`.
 - Python 3.8+;
 - Claude Code 2.1.196+ for `${CLAUDE_PROJECT_DIR}` skill substitution;
 - a writable, non-symlink `<WORKSPACE>/.claude/` directory;
-- at most eight user beats (nine runtime tasks including maintenance).
+- at most 49 user beats (50 runtime tasks including maintenance, which is Claude Code's limit). Circadian beats and board-assigned quest slots count as user beats here and must all be in the file: a live beat not in this file is invisible to the reconcile and will not survive a restart.
 
 License: Apache-2.0.

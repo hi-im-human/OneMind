@@ -20,7 +20,7 @@ paths require doubled backslashes.
 - Python 3.8+ on the PATH used by Claude Code hooks;
 - writable, non-symlink `<WORKSPACE>/.claude/` and task storage;
 - scheduled tasks enabled (`CLAUDE_CODE_DISABLE_CRON` unset/not `1`);
-- maximum eight user beats, leaving one additional task for package maintenance.
+- up to 49 user beats (Claude Code's 50-task limit, less one task for package maintenance). The former ceiling of eight was removed 2026-09-12: a beat refused by the file still registered and fired, then died on the next restart with no record.
 
 ## Install
 
@@ -112,7 +112,7 @@ Expected durable path:
 ```
 
 Setup writes canonical state before calling any cron tool. It also creates a daily
-package maintenance task in addition to the 2–8 user beats. Maintenance reconciles on
+package maintenance task in addition to the 2–49 user beats. Maintenance reconciles on
 ordinary days and performs create-first refresh when the last verified refresh is five
 days old.
 
@@ -139,7 +139,7 @@ Minimum install checks:
 1. `settings.json` parses as JSON.
 2. A fresh session receives either the no-state setup notice or the persisted-state
    reconciliation notice.
-3. `/freestyle-beats setup` creates `schedule.json` and 2–8 user tasks plus maintenance.
+3. `/freestyle-beats setup` creates `schedule.json` and 2–49 user tasks plus maintenance.
 4. Immediate `/freestyle-beats reconcile` creates no duplicate and preserves foreign jobs.
 5. Direct state validation succeeds:
 

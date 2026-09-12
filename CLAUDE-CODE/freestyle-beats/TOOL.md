@@ -3,7 +3,7 @@
 **Status:** 1.1.0 release-verified. Required local/live acceptance, independent review,
 sanitization, and link/version gates pass.
 
-**Purpose:** Persist and restore one installing workspace's 2–8 personal scheduled
+**Purpose:** Persist and restore one installing workspace's 2–49 personal scheduled
 prompts across fresh conversations, session loss, indeterminate compaction behavior, and
 the runtime's seven-day recurring-task expiry.
 

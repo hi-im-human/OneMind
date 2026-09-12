@@ -76,7 +76,7 @@ In an isolated `<WORKSPACE>`:
 - candidate exact times/labels/prompts survived;
 - state contains random instance/ownership material;
 - normal `show` output contains `<redacted>` and never prints the ownership key;
-- runtime tasks include 2–8 user beats + one `maintain` task;
+- runtime tasks include 2–49 user beats + one `maintain` task;
 - each marker validates only against this instance.
 
 Attempt a second `create` without `--replace`.
@@ -106,7 +106,7 @@ after that finding.
 
 ### D2. Initial creation and immediate idempotency
 
-**Expect after setup:** 2–8 user beats + one maintenance task; foreign task preserved.
+**Expect after setup:** 2–49 user beats + one maintenance task (the flat ceiling of 8 was removed 2026-09-12; an eleven-beat schedule is a correct result, not a mismatch); foreign task preserved.
 
 Run `/freestyle-beats reconcile` twice.
 
