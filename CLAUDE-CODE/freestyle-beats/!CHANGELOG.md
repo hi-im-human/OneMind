@@ -2,12 +2,23 @@
 
 ## Current status
 
-**1.1.1 — persisted-beat ceiling fixed; release-verified.** Required local/live
-acceptance, independent review, sanitization, and link/version gates pass.
+**1.1.1 — persisted-beat ceiling fixed. Patch, NOT release-verified.**
 
-⚑ **Next action:** none outstanding in the package. Any push of this change also
-carries the repository's unpushed local commit `f7c3e7d`; that is the repository
-owner's call, not the package's.
+⚑ **What was run for 1.1.1:** both suites on the shipped object (6/6 new red/green
+controls, 30/30 existing, 1 skip); the same controls against the pre-fix bytes
+(4 red, 2 green), so the instrument is known to discriminate; independent check by a
+second agent of the diff, both suites, both directions, and the maintenance
+accounting behind the derived ceiling; a doc sweep for the stale number.
+
+⛔ **What was NOT run:** live acceptance, sanitization, and the link/version gates —
+i.e. the gates that earned 1.1.0 its banner. *This status originally read
+"release-verified" because that phrasing was inherited from the 1.1.0 block rather
+than measured. A status field should undersell before it repeats a prior release's
+claim on a patch.*
+
+⚑ **Next action:** none outstanding. Pushed to `origin/main` 2026-09-12 at the
+repository owner's word, carrying the previously-held local commit `f7c3e7d` with it;
+both verified present on the remote. Installed copies should pull to get the fix.
 
 ## 2026-09-12 — 1.1.1 persisted-beat ceiling
 

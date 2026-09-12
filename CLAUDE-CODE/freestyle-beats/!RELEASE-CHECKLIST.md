@@ -5,6 +5,13 @@
 **PASS — 1.1.0 RELEASE-VERIFIED.** Required local/live acceptance, independent frozen-
 diff review, sanitization, and link/version gates pass.
 
+⚑ **1.1.1 (2026-09-12) is a patch and has NOT been through this checklist.** It
+changed the persisted-entry ceiling, the write-time refusal text, and the session
+notice. It carries suite coverage and an independent diff/behaviour check, not
+live acceptance or the sanitization and link/version gates. **The boxes below
+record 1.1.0's verdict and were not re-run.** Re-running them is what would make
+1.1.1 release-verified; until then the verdict above is the last measured one.
+
 ## Package structure
 
 - [x] Required `!SCHEMA` files present.
