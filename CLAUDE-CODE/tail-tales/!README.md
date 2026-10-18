@@ -18,6 +18,8 @@ register a SessionStart command.
 - Reads `transcript_path` and `cwd` from the lifecycle payload.
 - Writes the most recent 40 conversational turns after the last compaction boundary.
 - Excludes reasoning blocks, tool calls, scheduled prompts, and runtime markup.
+- Exception: keeps the `text` of channel reply tool calls (`mcp__<server>__reply`), labelled
+  `<agent> (sent):`, because on a chat bridge those calls are the agent's actual outgoing words.
 - Unwraps relayed channel messages before classifying their payload.
 - Collapses consecutive identical messages from the same speaker.
 - Uses a 30,000-character output cap. When capped, it preserves the header and newest

@@ -24,6 +24,12 @@ TAG_OPEN_RE = re.compile(r"^</?[A-Za-z][\w:.-]*(\s|/?>)")
 
 RESUME_BANNER = "This session is being continued from a previous conversation"
 
+# An agent's outgoing words on a channel (Discord, any MCP chat bridge) are NOT a
+# text block: they are the `text` argument of a `<server>__reply` tool call. Every
+# other tool call stays excluded; only a reply tool's text is the agent speaking.
+REPLY_TOOL_RE = re.compile(r"^mcp__.+__reply$")
+SENT_SPEAKER = "sent"
+
 # Timestamps render in the runtime machine's local timezone without requiring a
 # named timezone database.
 TAIL_TURNS = 40       # conversational turns (user/agent)
@@ -133,12 +139,20 @@ def get_recent_turns(path, agent_label, n=TAIL_TURNS):
                 continue
             for block in content:
                 btype = block.get("type")
-                # Exclude reasoning and tool-use blocks from persisted output.
+                # Exclude reasoning and tool-use blocks from persisted output,
+                # except a channel reply tool: its `text` is what the agent said.
                 if btype == "text":
                     t = block.get("text", "").strip()
                     if t:
                         # Keep one internal label for detection, counting, and formatting.
                         turns.append({"type": "agent", "ts": ts, "text": t})
+                elif btype == "tool_use" and REPLY_TOOL_RE.match(str(block.get("name", ""))):
+                    inp = block.get("input")
+                    t = inp.get("text") if isinstance(inp, dict) else None
+                    t = t.strip() if isinstance(t, str) else ""
+                    if t:
+                        turns.append({"type": "agent", "ts": ts, "text": t,
+                                      "speaker": SENT_SPEAKER})
 
     last_boundary = max(
         (i for i, t in enumerate(turns) if t["type"] == "boundary"),
@@ -180,7 +194,10 @@ def format_turn(t, agent_label):
         speaker = t.get("speaker") or OWNER_LABEL
         return f"**[{ts_str}] {speaker}:** {t['text']}{suffix}\n"
     if typ == "agent":
-        return f"**[{ts_str}] {agent_label}:** {t['text']}{suffix}\n"
+        # A reply sent on a channel is labelled so it is not mistaken for a
+        # terminal-only note that nobody else saw.
+        sent = " (sent)" if t.get("speaker") == SENT_SPEAKER else ""
+        return f"**[{ts_str}] {agent_label}{sent}:** {t['text']}{suffix}\n"
     return ""
 
 
@@ -321,7 +338,8 @@ def main():
         f"*Written by post_compact hook at {now}*",
         f"*Source: `{transcript.name}`*",
         f"*Last {conv_turns} conversational turns before compaction "
-        f"(reasoning + tool calls excluded; consecutive duplicates collapsed)*",
+        f"(reasoning + tool calls excluded, except channel replies, marked \"(sent)\"; "
+        f"consecutive duplicates collapsed)*",
         "",
         "---",
         "",

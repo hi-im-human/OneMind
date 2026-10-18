@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Outgoing channel replies are now kept: the `text` of `mcp__<server>__reply` tool calls is
+  written as `<agent> (sent):` turns. Other tool calls stay excluded. Smoke case 16 covers it,
+  and it was verified red on the previous hook and green on this one.
+
 - Documentation rewritten as technical package documentation.
 - Release checklist reduced to executable surface, regression, runtime, and uninstall checks.
 
