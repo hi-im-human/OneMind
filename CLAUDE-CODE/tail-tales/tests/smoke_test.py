@@ -167,6 +167,31 @@ r15 = show(15, "two speakers, identical text — both must survive",
                 relayed("Alice", "twice over", "2026-08-15T14:00:04.000Z"),
                 ASST]))
 
+# Outgoing channel replies. On a chat bridge the agent's actual words are the
+# `text` argument of a `<server>__reply` tool call, not a text block. Before this
+# case, the tale kept only the agent's terminal note ABOUT what it said and lost
+# the words themselves. Only reply tools are admitted: every other tool call
+# (including other tools on the same bridge) must stay out.
+def tool(name, inp, ts):
+    return {"type": "assistant",
+            "message": {"content": [{"type": "tool_use", "id": "t", "name": name, "input": inp}]},
+            "timestamp": ts}
+
+
+r16 = show(16, "outgoing channel replies kept; other tool calls still excluded",
+           run([relayed("Alice", "are you there?", "2026-08-15T14:00:01.000Z"),
+                tool("mcp__plugin_chat_chat__reply",
+                     {"chat_id": "1", "text": "SENT_WORDS here I am"}, "2026-08-15T14:00:02.000Z"),
+                tool("mcp__plugin_chat_chat__react",
+                     {"chat_id": "1", "emoji": "REACT_SENTINEL"}, "2026-08-15T14:00:03.000Z"),
+                tool("Bash", {"command": "echo BASH_SENTINEL"}, "2026-08-15T14:00:04.000Z"),
+                tool("mcp__plugin_chat_chat__reply",
+                     {"chat_id": "1", "text": "   "}, "2026-08-15T14:00:05.000Z"),
+                tool("mcp__plugin_chat_chat__reply",
+                     {"chat_id": "1", "files": ["x.png"]}, "2026-08-15T14:00:06.000Z"),
+                {**ASST, "message": {"content": [{"type": "text",
+                                                  "text": "SENT_WORDS here I am"}]}}]))
+
 print("\n\n### ASSERTIONS")
 ok = True
 
@@ -265,9 +290,20 @@ check("15: same speaker + same text STILL collapses (the feature is intact)",
 check("12: a normal trim does NOT write the failure log",
       r12[3] is None)
 
+t16 = r16[2] or ""
+check("16: a reply tool's text is kept as the agent's words, marked (sent)",
+      "TestAgent (sent):** SENT_WORDS here I am" in t16)
+check("16: a same-text terminal note is NOT merged into the sent reply",
+      "TestAgent:** SENT_WORDS here I am" in t16)
+check("16: other tools on the same bridge stay excluded", "REACT_SENTINEL" not in t16)
+check("16: ordinary tool calls stay excluded", "BASH_SENTINEL" not in t16)
+check("16: an empty or text-less reply adds no turn", t16.count("(sent):**") == 1)
+check("16: the inbound relayed message still lands under its sender",
+      "Alice:** are you there?" in t16)
+
 check("all: every case exited 0 — a hook must never break the runtime",
       all(r[0] == 0 for r in (r1, r2, r3, r4, r5, r7, r8, r9,
-                              r10, r11, r12, r13, r14)))
+                              r10, r11, r12, r13, r14, r15, r16)))
 
 print(f"\nSUITE: {'PASS' if ok else 'FAIL'}")
 sys.exit(0 if ok else 1)

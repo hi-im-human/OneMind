@@ -15,6 +15,11 @@ payload `transcript_path` and `cwd`; it does not use a hardcoded workspace path.
 - The output contains at most 40 conversational turns after that boundary.
 - Text content is included; reasoning, tool calls, scheduled prompts, and runtime
   markup are excluded.
+- Exception: an assistant `tool_use` block whose name matches `^mcp__.+__reply$` and
+  whose `input.text` is a non-empty string is included as an agent turn, rendered as
+  `<agent> (sent):`. Other tools on the same server (react, edit, fetch) and all other
+  tool calls remain excluded. A sent reply and an identical terminal note are kept as
+  two turns, not collapsed.
 - Channel envelopes are unwrapped before message classification.
 - Consecutive identical same-speaker messages are collapsed with a repeat count.
 - Timestamps use the runtime machine's local time.
